@@ -1,39 +1,85 @@
 import torch
 import torch.nn as nn
 
-from physioex.explain.posthoc._trapezoid import trapezoid_rule
+from src.posthoc.integrals import step_integral
 
 from typing import Union
 
+def expected_line_integral(
+    fn: nn.Module,
+    x : torch.Tensor,
+    baselines : torch.Tensor
+):
+    n_points = len(baselines)
+
+    SG = 0
+    t = torch.linspace(
+        0, 1, n_points, device=x.device, dtype=x.dtype
+    )
+
+    for i in range(1, n_points):
+        
+        def path( alpha ):
+            return x*alpha - ( 1-alpha) * baselines[i].to(x.device)
+        
+        def jac_path( alpha ):
+            return x - baselines[i].to(x.device)
+
+        SG += step_integral(fn, t, i, path, jac_path, x.device)
+            
+    return SG
+
+def expected_Lineh_integral(
+    fn: nn.Module,
+    x : torch.Tensor,
+    baselines : torch.Tensor,
+):
+
+    T = torch.linspace(
+        0, 1, baselines.shape[0], device=x.device, dtype=x.dtype
+    )
+
+    SG = 0
+    
+    curve = []
+
+    for i, t in enumerate(T):
+        
+        path_step = baselines[i] - t * ( baselines[i] - x ) 
+
+        G = torch.func.vmap( torch.func.jacrev(fn))( path_step ) 
+
+        J = - ( baselines[i] - x ) 
+
+        G = torch.einsum( "bmn,bn->bmn", G, J )
+
+        curve = curve + [G]        
+
+    curve = torch.stack( curve, dim = 0)    
+    curve = torch.trapezoid( curve, dx = 1/(baselines.shape[0]-1), dim = 0 )
+
+    return curve
 
 class ExpectedGradients(nn.Module):
-    def __init__(self, 
-        f : callable,
+    def __init__(
+        self,
+        fn : nn.Module,
         baselines : torch.Tensor,
-        n_points : int = 50,
-        ):
+        n_points : int = 50,    
+    ):
         super().__init__()
 
-        self.baselines = baselines
+        self.baselines = []
 
-        def segment_fun( alpha : torch.Tensor, x_1: torch.Tensor, x_2: torch.Tensor):
-
-            batch_size = x_1.shape[0]
-
-            # draw a random baseline for the batch
-            indexes = torch.randint(0, baselines.shape[0], (batch_size,))
-            x_2 = baselines[indexes].to(x_1.device)    
-            
-            return alpha*x_1 + (1-alpha)*x_2
-
-        self.segment_fun = segment_fun
+        for i in range( n_points ):
+            indx = torch.randperm( len(baselines))
+            self.baselines += baselines[indx]
         
-        self.fun = f
+        self.baselines = torch.stack( self.baselines, dim = 0 ).reshape(n_points, len(baselines),  *baselines.shape[1:])
+        
         self.n_points = n_points
-        
-    def forward(self, x ):
-        
-        batch_size, n = x.shape
-        indexes = torch.randint(0, x.shape[0], (batch_size,)).to(x.device)  
-            
-        return trapezoid_rule( self.fun, x, self.baselines[indexes], self.segment_fun, self.n_points )
+        self.fn = fn
+
+    def forward(self, x):
+        batch_size = x.shape[0]
+        return expected_line_integral(self.fn, x, self.baselines[:, :batch_size])

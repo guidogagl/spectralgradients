@@ -1,5 +1,8 @@
 loguru
 numpy
 torch
+torchaudio
 scikit-learn
 scipy
+pytorch-lightning
+pandas

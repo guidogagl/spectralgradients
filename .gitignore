@@ -1,5 +1,4 @@
-/output/data/
-/output/models/checkpoint/
+/output/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
