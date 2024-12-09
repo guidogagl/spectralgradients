@@ -4,28 +4,33 @@ from torch import nn
 from tqdm.autonotebook import tqdm
 import gc
 
+
 def gaussian_perturbation(x: torch.Tensor, seed: int) -> torch.Tensor:
     torch.manual_seed(seed)
 
-    I = torch.randn_like( x )
+    I = torch.randn_like(x)
 
-    return x + (.1*I)
+    return x + (0.1 * I)
 
 
 class LocalLipschitzEstimate(nn.Module):
     def __init__(
         self,
-        f: callable,  # f is the explanation function, not the model
+        exp: nn.Module,  # f is the explanation function, not the model
         I: callable = gaussian_perturbation,  # value to substitute the feature with
-        n_trials: int = 50,
+        n_points: int = 50,
         similarity: callable = torch.cdist,
+        name: str = "lle",
+        f: nn.Module = None,
+        **kwargs,
     ):
 
         super(LocalLipschitzEstimate, self).__init__()
-        self.f = f
+        self.f = exp
         self.I = I
         self.similarity = similarity
-        self.n_trials = n_trials
+        self.n_trials = n_points
+        self.name = name
 
     @torch.no_grad()
     def forward(self, x, attr, mask):
@@ -39,15 +44,16 @@ class LocalLipschitzEstimate(nn.Module):
 
         attr = attr.reshape(batch_size * m, n)
 
-        for i in range(self.n_trials) :
+        for i in range(self.n_trials):
 
             x_I = self.I(x, seed=i)
             Den = 1 / self.similarity(x.unsqueeze(1), x_I.unsqueeze(1)).reshape(
                 batch_size
             )
 
+            with torch.enable_grad():
+                Num = self.f(x_I)
 
-            Num = self.f(x_I)
             Num = Num.reshape(batch_size * m, 1, n)
             Num = self.similarity(attr.unsqueeze(1), Num).reshape(
                 batch_size, m

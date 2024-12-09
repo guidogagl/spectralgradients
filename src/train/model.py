@@ -7,12 +7,16 @@ import torchmetrics as tm
 
 class TimeModule(pl.LightningModule):
     def __init__(
-        self, model: str = "conv", input_shape : tuple = [1, 1000], n_classes: int = 6
+        self,
+        model: str = "conv",
+        input_shape: tuple = [1, 1000],
+        fs: int = 100,
+        n_classes: int = 6,
     ):
         super(TimeModule, self).__init__()
         self.n_classes = n_classes
 
-        self.nn = TimeConvNet(input_shape, self.n_classes)
+        self.nn = TimeConvNet(input_shape, fs, self.n_classes)
 
         self.wacc = tm.Accuracy(
             task="multiclass", num_classes=self.n_classes, average="weighted"
@@ -108,15 +112,15 @@ class TimeModule(pl.LightningModule):
 class TimeConvNet(nn.Module):
     def __init__(
         self,
-        input_shape, 
-        fs : int = 100,
+        input_shape,
+        fs: int = 100,
         n_classes: int = 6,  # number of classes
     ):
         super().__init__()
 
         self.n_classes = n_classes
         self.input_shape = input_shape
- 
+
         self.conv = nn.Sequential(
             nn.Conv1d(1, 4, kernel_size=fs, stride=fs // 2),
             nn.ReLU(),
@@ -124,14 +128,14 @@ class TimeConvNet(nn.Module):
             nn.Conv1d(4, 8, kernel_size=4, stride=2),
             nn.ReLU(),
             nn.BatchNorm1d(8),
-            nn.Conv1d(8, 16, kernel_size=8, stride=4),
+            nn.Conv1d(8, 16, kernel_size=4, stride=2),
             nn.ReLU(),
             nn.BatchNorm1d(16),
             nn.Flatten(),
-        )   
+        )
 
-        out_shape = self.conv( torch.rand( 1, *input_shape) ).shape[-1]
-            
+        out_shape = self.conv(torch.rand(1, 1, *input_shape)).shape[-1]
+
         self.lin1 = nn.Linear(out_shape, self.n_classes)
 
     def forward(self, x):
@@ -141,7 +145,7 @@ class TimeConvNet(nn.Module):
         else:
             batch_size = x.shape[0]
 
-        x = x.reshape( batch_size, 1, x.shape[-1])
+        x = x.reshape(batch_size, 1, x.shape[-1])
 
         x = self.conv(x)
         x = self.lin1(x)

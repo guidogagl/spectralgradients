@@ -6,3 +6,7 @@ scikit-learn
 scipy
 pytorch-lightning
 pandas
+jupyter
+ipywidgets
+matplotlib
+tensorboard

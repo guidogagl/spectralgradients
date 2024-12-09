@@ -23,21 +23,21 @@ def freqs_path_integral(fn: nn.Module, x, fs, nperseg, Q=5, strategy="highest"):
     nyquist = 0.5 * fs
     freq_res = fs / nperseg
 
-    SG, W = [], []
+    SG = 0
 
     steps = torch.arange(0, nyquist + freq_res, freq_res)
 
     if strategy == "highest":  # remove the high frequency components first
-        steps = steps.flip( dims = 0)
+        steps = steps.flip(dims = 0)
         filter_type = "low"
     elif strategy == "lowest":
         filter_type = "high"
 
     steps = steps[1:]
     start = x
-
-    for i, step in enumerate(steps):
     
+    for i, step in enumerate(steps):                  
+
         if step == 0 or step == nyquist:
             end = torch.zeros_like(x)
         else:
@@ -49,24 +49,24 @@ def freqs_path_integral(fn: nn.Module, x, fs, nperseg, Q=5, strategy="highest"):
         def jac_path(alpha):
             return start - end
 
-        W = W + [ torch.abs(nn(start) - nn(end)).cpu()]
-        SG = SG + [step_integral(fn, step, i, path, jac_path, x.device).cpu()]
+        W = torch.abs(nn(start) - nn(end))
+
+        SG += torch.einsum(
+            "bm,bmn->bmn", W, step_integral(fn, step, i, path, jac_path, x.device)
+        )
 
         start = end
 
-    W = torch.stack( W, dim = 0).permute(1, 2, 0) # b, m , f
-    SG = torch.stack(SG, dim = 0).permute(1, 2, 0, 3) # b, m , f,  n
-
-    return W, SG
+    return SG
 
 
-class SpectralGradients(nn.Module):
+class TimeSpectralGradients(nn.Module):
     def __init__(
         self,
         f: nn.Module,
-        fs: float,
-        Q: int,
-        nperseg: int,
+        fs: float = 100,
+        nperseg: int = 200,
+        Q: int = 5,
         strategy: str = "highest",
     ):
         super().__init__()

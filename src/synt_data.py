@@ -29,7 +29,7 @@ class SyntDataset(torch.utils.data.Dataset):
         fs: float = 100,  # sampling frequency
         length: int = 10,  # length of the time series in seconds
         bandwidth: float = 5.0,  # bandwidth of the Gaussian window
-        return_mask : float = False,
+        return_mask: float = False,
     ):
 
         # create n_samples time series for each class

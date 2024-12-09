@@ -65,9 +65,9 @@ def intgrad_explainer(
     gc.collect()
     torch.cuda.empty_cache()
 
-    intgrad = IntegratedGradients(fn=model, baselines=torch.zeros_like(inputs), n_points=n_points).to(
-        device
-    )
+    intgrad = IntegratedGradients(
+        fn=model, baselines=torch.zeros_like(inputs), n_points=n_points
+    ).to(device)
 
     explanations = intgrad(inputs.to(device))
     # explanations shape : (batch_size, num_classes, num_features)
@@ -142,7 +142,7 @@ def wspectralgrads_explainer(
 
 
 from src.metrics.lle import LocalLipschitzEstimate as LLE
-from src.metrics.irof import IROF
+from src.metrics.infidelity import IROF
 from src.metrics.localization import Localization
 
 
@@ -201,7 +201,7 @@ def irof(explainer, model, x, y, attr, mask):
         mask,
     )
 
-    result = torch.zeros( len( irof_result ) )
+    result = torch.zeros(len(irof_result))
     for i in range(irof_result.shape[0]):
         result[i] = irof_result[i, y[i].long().item()]
 

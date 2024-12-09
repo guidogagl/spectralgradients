@@ -83,7 +83,9 @@ def train():
 
     logger.info("Building the model")
     # create the model
-    model = TimeModule(input_shape= dataset[0].shape, fs = 100, n_classes=dataset.n_class)
+    model = TimeModule(
+        input_shape=dataset[0][0].shape, fs=100, n_classes=dataset.n_class
+    )
 
     # create the checkpoint callback
 
@@ -118,7 +120,10 @@ def train():
 
     # load the best model
     best_model = TimeModule.load_from_checkpoint(
-        trainer.checkpoint_callback.best_model_path, model=model_type, n_classes = dataset.n_class
+        trainer.checkpoint_callback.best_model_path,
+        model=model_type,
+        fs=100,
+        n_classes=dataset.n_class,
     )
 
     # test the model

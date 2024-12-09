@@ -17,20 +17,23 @@ pl.seed_everything(1000)
 sys.path.append(os.getcwd())
 
 
-
 ##### DATA LOADING #######
 from src.synt_data import SyntDataset
 
 logger.info("Loading dataset")
 
 
-data = SyntDataset( return_mask=True)
+data = SyntDataset(return_mask=True)
 
 from torch.utils.data import SubsetRandomSampler, DataLoader
 
 batch_size = 256
 
-loader = DataLoader( data, batch_size = batch_size, sampler = SubsetRandomSampler( list(range(len(data) - data.n_samples ) ) ))
+loader = DataLoader(
+    data,
+    batch_size=batch_size,
+    sampler=SubsetRandomSampler(list(range(len(data) - data.n_samples))),
+)
 
 ######  MODEL LOADING ######
 
@@ -39,8 +42,13 @@ from src.train.model import TimeModule
 logger.info("Loading model from checkpoint")
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-fn = TimeModule.load_from_checkpoint("output/model/checkpoint/epoch=19-step=21686-val_acc=0.93.ckpt", n_classes = data.n_class).eval()
-fn = nn.Sequential(OrderedDict([("fn", fn), ("softmax", nn.Softmax(dim=-1))])).to(device)
+fn = TimeModule.load_from_checkpoint(
+    "output/model/checkpoint/epoch=19-step=21686-val_acc=0.93.ckpt",
+    n_classes=data.n_class,
+).eval()
+fn = nn.Sequential(OrderedDict([("fn", fn), ("softmax", nn.Softmax(dim=-1))])).to(
+    device
+)
 
 
 # Explanations methods
@@ -49,10 +57,10 @@ from src.explainer_wrapper import explainer_wrapper, localization, lle, irof
 
 logger.info("Model and data loaded, preparing explanation experiment...")
 
-baseline_size = 4*batch_size
-baseline = torch.randperm( len(data))[:baseline_size].long()
+baseline_size = 4 * batch_size
+baseline = torch.randperm(len(data))[:baseline_size].long()
 
-baseline, _, _ = data[ baseline ]
+baseline, _, _ = data[baseline]
 
 methods = [
     {
@@ -74,7 +82,6 @@ methods = [
     {
         "method": "IntegratedGradients",
     },
-
 ]
 
 for method in methods:
