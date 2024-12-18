@@ -9,45 +9,52 @@ class Infidelity(nn.Module):
         self,
         f: callable,
         patch: float = 0,  # value to substitute the feature with
-        percentage_res: float = 0.1,  # number of feature to remove at each step
+        percentage: float = 0.1,  # number of feature to remove at each step
         name: str = "inf",
         **kwargs,
     ):
         super(Infidelity, self).__init__()
         self.f = f
         self.patch = patch
-        self.percentages = torch.arange(percentage_res, 1, percentage_res)
+        self.percentage = percentage
         self.name = name
 
     @torch.no_grad()
     def forward(self, x, attr, mask):
-        attr_ = attr.clone()
-        # pooling the attributions
-        patch_size = int(self.percentages[0] * x.size(-1))
+        batch_size, m, n = attr.size()
 
-        for i in range(0, x.size(-1), patch_size):
-            max_pool, _ = attr[:, :, i : i + patch_size].max(dim=-1)
-            max_pool = max_pool.unsqueeze(-1).repeat(1, 1, patch_size)
-            attr_[:, :, i : i + patch_size] = max_pool
+        attr = torch.einsum( "bmn,bn->bmn", attr, torch.sign(x))
+        attr = nn.functional.relu(attr)
 
-        attr = attr_
-        sorted_attr = torch.argsort(attr, dim=-1)
+        patch_size = int( n * self.percentage )
 
-        inf = [self.f(x).cpu()]
+        attr = attr.reshape( batch_size, m, -1, patch_size)
+        attr = attr.sum( dim = -1)
+        
+        sorted_attr = torch.argsort(attr, dim=-1, descending = True)
 
-        for i, perc in enumerate(self.percentages):
+        infidelity = []
 
-            occlusion_attr = sorted_attr[..., i * patch_size : (i + 1) * patch_size]
+        inf0 = self.f(x) # b, m
+        for c in range( m ):
+            x_ = x.clone()
+            inf = [inf0[:, c]]
 
-            for b in range(0, x.size(0)):
-                x[b, occlusion_attr[b].long()] = self.patch
+            for i in range( sorted_attr.size(-1) ):            
+                for b in range( batch_size ):
+                    f = int( sorted_attr[b, c, i] * patch_size )
+                    x_[b, f:f+patch_size] = self.patch                   
 
-            inf = inf + [self.f(x).cpu()]
+                inf = inf + [self.f(x_)[:, c]]
 
-        inf = inf + [self.f(torch.ones_like(x) * self.patch).cpu()]
+            inf = inf + [self.f(torch.ones_like(x_) * self.patch)[:, c]]
+            inf = torch.stack(inf, dim=0) # f, b 
+            inf = torch.einsum( "fb,b->fb", inf, 1/inf[0])
+            inf = torch.trapezoid( inf, dx = 1/inf.shape[0], dim = 0)
 
-        inf = torch.stack(inf, dim=0).to(x.device)
-        inf = torch.einsum("pbm,bm->pbm", inf, 1 / inf[0])
-        inf = torch.trapezoid(inf, dx=1 / inf.shape[0], dim=0)
+            infidelity = infidelity + [inf]
 
-        return inf
+        infidelity = torch.stack(infidelity, dim=0) # m, b
+        infidelity = infidelity.permute( 1, 0) 
+
+        return infidelity

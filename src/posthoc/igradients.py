@@ -21,4 +21,5 @@ class IntegratedGradients(nn.Module):
         self.n_points = n_points
 
     def forward(self, x: torch.Tensor):
-        return fline_integral(self.fun, x, self.baselines, self.n_points)
+        batch_size = x.shape[0]
+        return fline_integral(self.fun, x, self.baselines[:batch_size], self.n_points)

@@ -15,20 +15,17 @@ class Localization(nn.Module):
 
     @torch.no_grad()
     def forward(self, x, attr, mask):
+
+        attr = torch.einsum( "bmn,bn->bmn", attr, torch.sign(x))
         attr = nn.functional.relu(attr)
 
-        Rtot = attr.reshape(attr.shape[0], -1).sum(1)
-
+        Rtot = attr.sum( -1 ) # b, m
         Rtot = torch.where(Rtot > 0, Rtot, float("inf"))
 
         Rin = torch.einsum("bmn,bn->bm", attr, mask.float())
-        mu = torch.einsum("bm,b->bm", Rin, 1 / Rtot)
+        mu = torch.einsum("bm,bm->bm", Rin, 1 / Rtot)
 
-        Stot = attr.shape[1:]
-        Stot = torch.tensor(Stot).prod().item()
-
-        Sin = mask.reshape(mask.shape[0], -1).sum(1)
-
-        Sin = torch.where(Sin > 0, Sin, float("inf"))
+        Stot = torch.ones_like( mask ).sum( -1 ) # b
+        Sin = mask.sum( -1 )
 
         return torch.einsum("bm,b->bm", mu, (Stot / Sin))

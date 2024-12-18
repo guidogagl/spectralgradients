@@ -10,27 +10,63 @@ from scipy import signal as F
 from scipy.ndimage import gaussian_filter1d
 
 from loguru import logger
+import os
 
-BACKGROUND_NOISE = [{"freq": 5}]
+BACKGROUND_NOISE = None
+CLASS_DESC = None
 
-CLASS_DESC = [
-    [{"freq": 45}],
-    [{"freq": 15}],
-    [{"freq": 25, "sec": (0, 0.5)}],
-    [{"freq": 25, "sec": (0.5, 1)}],
+SETUPS =[
+    {
+        "noise" : [{"freq": 5}],
+        "desc": [
+            [{"freq": 45}],
+            [{"freq": 15}],
+            [{"freq": 25, "sec": (0, 0.5)}],
+            [{"freq": 25, "sec": (0.5, 1)}],
+        ]
+    },
+    {
+        "noise" : [{"freq": 45}],
+        "desc": [
+            [{"freq": 5}],
+            [{"freq": 15}],
+            [{"freq": 25, "sec": (0, 0.5)}],
+            [{"freq": 25, "sec": (0.5, 1)}],
+        ]
+    },
+    {
+        "noise" : [
+            [{"freq": 45}], 
+            [{"freq": 5}], 
+            [{"freq": 45}, {"freq": 5}]
+        ],
+        "desc": [
+            [{"freq": 15}],
+            [{"freq": 25}],
+            [{"freq": 35, "sec": (0, 0.5)}],
+            [{"freq": 35, "sec": (0.5, 1)}],
+        ]
+    }
 ]
 
 
 class SyntDataset(torch.utils.data.Dataset):
     def __init__(
         self,
-        class_desc: dict = CLASS_DESC,  # frequencies of the sinusoidal signals for each class
+        setup : int = 0,
         n_samples: int = 10000,  # number of samples per class
         fs: float = 100,  # sampling frequency
         length: int = 10,  # length of the time series in seconds
         bandwidth: float = 5.0,  # bandwidth of the Gaussian window
         return_mask: float = False,
+        nperseg : int = 200,
     ):
+        global BACKGROUND_NOISE, CLASS_DESC
+
+        class_desc = SETUPS[setup]["desc"]
+        noise = SETUPS[setup]["noise"]
+        CLASS_DESC = class_desc
+        BACKGROUND_NOISE = noise.copy()
 
         # create n_samples time series for each class
         self.data = []
@@ -39,7 +75,7 @@ class SyntDataset(torch.utils.data.Dataset):
 
         for i, freqs in enumerate(class_desc):
             try:
-                with open(f"output/data/synt_class={i}.npy", "rb") as f:
+                with open(f"output/data/setup{setup}/synt_class={i}.npy", "rb") as f:
                     temp = np.load(f)
                     time_series, masks, labels = (
                         temp["signal"],
@@ -58,11 +94,12 @@ class SyntDataset(torch.utils.data.Dataset):
             except:
                 # print the exception information
                 # logger.exception(f"Error loading data/synt_class={i}.pt")
-                print(f"Error loading output/data/synt_class={i}.pt")
+                print(f"Error loading output/data/setup{setup}/synt_class={i}.pt")
                 time_series, masks, labels = [], [], []
 
                 for _ in range(n_samples):
-
+                    if len( noise ) > 1:
+                        BACKGROUND_NOISE = noise[ _ % len(noise)].copy()
                     signal, mask = gen_time_series(freqs, fs, length, bandwidth)
                     time_series.append(signal)
                     masks.append(mask)
@@ -72,10 +109,9 @@ class SyntDataset(torch.utils.data.Dataset):
                 labels = torch.tensor(labels).long()
                 masks = torch.stack(masks).long()
 
-                print(f"Saving output/data/synt_class={i}.pt")
-                print(time_series.shape, labels.shape)
-
-                with open(f"output/data/synt_class={i}.npy", "wb") as f:
+                print(f"Saving output/data/setup{setup}/synt_class={i}.pt")
+                os.makedirs(f"output/data/setup{setup}/", exist_ok= True)
+                with open( f"output/data/setup{setup}/synt_class={i}.npy", "wb") as f:
                     np.savez(
                         f,
                         signal=time_series.numpy(),
@@ -89,7 +125,10 @@ class SyntDataset(torch.utils.data.Dataset):
 
         # add baseline as a class
         time_series, masks, labels = [], [], []
-        for _ in range(n_samples // 2):
+        for _ in range(n_samples // 2):    
+            if len( noise ) > 1:
+                BACKGROUND_NOISE = noise[ _ % len(noise)].copy()
+
             signal, mask = gen_time_series(None, fs, length, bandwidth)
             time_series.append(signal)
             masks.append(mask)
@@ -123,7 +162,7 @@ class SyntDataset(torch.utils.data.Dataset):
 
         for i in range(self.n_class):
             _, P = F.welch(
-                self.data[self.labels == i].numpy(), fs=fs, nperseg=fs * 2, axis=1
+                self.data[self.labels == i].numpy(), fs=fs, nperseg=nperseg, axis=1
             )
             self.mean_power.append(np.mean(P, axis=0))
 
@@ -168,8 +207,8 @@ def gen_time_series(
         b, a = F.butter(4, [low, high], btype="bandpass")
         filt = F.filtfilt(b, a, white_noise)
 
-        amp = np.random.uniform(0, 1)
-        filtered_signal += amp * filt
+        #amp = np.random.uniform(0, 1)
+        filtered_signal +=  filt #* amp
 
     # Add the power of the class
 
@@ -180,7 +219,7 @@ def gen_time_series(
             freq = descriptor["freq"]
 
             # amp is a random float between 0 and 1 both included
-            amp = np.random.uniform(0, 1)
+            #amp = np.random.uniform(0, 1)
 
             low = (freq - bandwidth / 2) / nyquist
             high = (freq + bandwidth / 2) / nyquist
@@ -246,7 +285,7 @@ def gen_time_series(
                     sigma,
                 )
 
-            filtered_signal += amp * filt
+            filtered_signal += filt #* amp 
 
         if not _mask.any() and desc is not None:
             raise ValueError(

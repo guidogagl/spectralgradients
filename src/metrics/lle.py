@@ -39,23 +39,21 @@ class LocalLipschitzEstimate(nn.Module):
         # LLE = E[ || f(x) - F(x_I) ||_2 / ||x - x_I||_2 ]
 
         batch_size, m, n = attr.shape
+        attr = attr.reshape( batch_size * m, 1, n)
 
-        lle = torch.zeros(batch_size, m).to(x.device)
-
-        attr = attr.reshape(batch_size * m, n)
+        lle = torch.zeros( batch_size, m).to(x.device)
 
         for i in range(self.n_trials):
 
             x_I = self.I(x, seed=i)
-            Den = 1 / self.similarity(x.unsqueeze(1), x_I.unsqueeze(1)).reshape(
-                batch_size
-            )
+            Den = 1 / self.similarity(x.unsqueeze(1), x_I.unsqueeze(1)).reshape(-1)
 
             with torch.enable_grad():
                 Num = self.f(x_I)
 
             Num = Num.reshape(batch_size * m, 1, n)
-            Num = self.similarity(attr.unsqueeze(1), Num).reshape(
+
+            Num = self.similarity(attr, Num).reshape(
                 batch_size, m
             )  # b, m , n
 

@@ -11,6 +11,7 @@ from loguru import logger
 
 from torchmetrics import Accuracy
 
+import pandas as pd
 
 class Wrapper(torch.nn.Module):
     def __init__(self, nn, input_shape):
@@ -180,8 +181,10 @@ def evaluation_script(
         ],
     )
 
-    trainer.test(eval_module, loader)
-
+    results = trainer.test(eval_module, loader)
+    
+    results = pd.DataFrame( results )
+    results.to_csv( checkpoint_path + "metrics.csv" )
 
 from torch.utils.data import SubsetRandomSampler, DataLoader
 import sys, os
@@ -201,65 +204,102 @@ from src.metrics.infidelity import Infidelity
 from src.metrics.localization import Localization
 from src.metrics.complexity import Complexity
 
+torch.set_float32_matmul_precision('medium')
+
 batch_size = 256
+setups = [0, 1, 2]
+
+n_points_tsg = 10
+nperseg = 100
+fs = 100
 
 if __name__ == "__main__":
 
-    data = SyntDataset(return_mask=True)
-    loader = DataLoader(
-        data,
-        batch_size=batch_size,
-        sampler=SubsetRandomSampler(list(range(len(data) - data.n_samples))),
-        num_workers=os.cpu_count(),
-    )
+    for setup in setups:
 
-    nn = TimeModule.load_from_checkpoint(
-        "output/synt_model/checkpoint/checkpoint.ckpt",
-        input_shape=data[0][0].shape,
-        fs=100,
-        n_classes=data.n_class,
-    ).nn.eval()
-    nn = Wrapper(
-        nn,
-        input_shape=data[0][0].shape,
-    )
+        dataset = SyntDataset(setup = setup, nperseg=nperseg, return_mask=True)
 
-    baseline_size = 4 * batch_size
-    baseline = torch.randperm(len(data))[:baseline_size].long()
-    baseline, _, _ = data[baseline]
+        data = SyntDataset(return_mask=True)
+        loader = DataLoader(
+            data,
+            batch_size=batch_size,
+            sampler=SubsetRandomSampler(list(range(len(data) - data.n_samples))),
+            num_workers=os.cpu_count(),
+        )
 
-    explainers = torch.nn.ModuleList(
-        [
-            Saliency(f=nn),
-            InputXGradient(f=nn),
-            IntegratedGradients(
-                f=nn, baselines=torch.zeros(batch_size, *data[0][0].shape)
-            ),
-            ExpectedGradients(f=nn, baselines=baseline),
-            TSG( f = nn )
+        nn = TimeModule.load_from_checkpoint(
+            f"output/model/setup{setup}/checkpoint.ckpt",
+            input_shape=data[0][0].shape,
+            fs=100,
+            n_classes=data.n_class,
+        ).nn.eval()
+
+        nn = Wrapper(
+            nn,
+            input_shape=data[0][0].shape,
+        )
+
+        baseline_size = 4 * batch_size
+        baseline = torch.randperm(len(data))[:baseline_size].long()
+        baseline, _, _ = data[baseline]
+        
+
+        nyquist = fs / 2
+        f_res = fs / nperseg
+        freqs = torch.arange(0, nyquist + f_res, f_res)
+        n_points = len(freqs) * n_points_tsg
+
+        explainers = torch.nn.ModuleList(
+            [
+                Saliency(f=nn),
+                InputXGradient(f=nn),
+                IntegratedGradients(
+                    f=nn, 
+                    baselines=torch.zeros(batch_size, *data[0][0].shape),
+                    n_points= n_points
+                ),
+                ExpectedGradients(
+                    f=nn, 
+                    baselines=baseline,
+                    n_points= n_points
+                ),
+                TSG( 
+                    f = nn, 
+                    fs = fs,
+                    nperseg = nperseg,
+                    n_points = n_points_tsg,
+                    strategy="highest" 
+                ),
+                TSG(     
+                    f = nn, 
+                    fs = fs,
+                    nperseg = nperseg,
+                    n_points = n_points_tsg,
+                    strategy="lowest" 
+                ),
+            ]
+        )
+
+        explainers_names = ["sal", "ixg", "ig", "eg", "tsgh", "tsgl"]
+
+        metrics = [
+            Localization,
+            Complexity,
+            Infidelity,
+            #LLE,
         ]
-    )
 
-    explainers_names = ["sal", "ixg", "ig", "eg", "tsg"]
+        metrics_kwargs = [{}, {}, {}, {}]
 
-    metrics = [
-        Localization,
-        Complexity,
-        Infidelity,
-        LLE,
-    ]
+        metrics_names = ["loc", "comp", "inf"] # , "lle"
 
-    metrics_kwargs = [{}, {}, {}, {}]
-
-    metrics_names = ["loc", "comp", "inf", "lle"]
-
-    evaluation_script(
-        nn=nn,
-        loader=loader,
-        explainers=explainers,
-        explainers_names=explainers_names,
-        metrics=metrics,
-        metrics_kwargs=metrics_kwargs,
-        metrics_names=metrics_names,
-        checkpoint_path="output/model/eval/",
-    )
+        evaluation_script(
+            nn=nn,
+            loader=loader,
+            explainers=explainers,
+            explainers_names=explainers_names,
+            metrics=metrics,
+            metrics_kwargs=metrics_kwargs,
+            metrics_names=metrics_names,
+            checkpoint_path=f"output/model/setup{setup}/metrics/",
+        )
