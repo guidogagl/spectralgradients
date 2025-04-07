@@ -1,7 +1,7 @@
 import torch
 from torch import nn
 
-
+@torch.no_grad()
 def step_integral(
     fn: nn.Module,
     t: torch.Tensor,
@@ -33,7 +33,7 @@ def step_integral(
 
     return SG
 
-
+@torch.no_grad()
 def path_integral(
     fn: nn.Module,
     path: callable,

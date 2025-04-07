@@ -12,6 +12,7 @@ from loguru import logger
 from torchmetrics import Accuracy
 
 import pandas as pd
+import os
 
 class Wrapper(torch.nn.Module):
     def __init__(self, nn, input_shape):
@@ -26,7 +27,7 @@ class Wrapper(torch.nn.Module):
             x = x.unsqueeze(0)
             batched = False
 
-        # logger.info( x.shape)
+        # logger.info( x.shape )
 
         batch_size, n = x.shape
         y = self.nn(x.reshape(batch_size, *self.input_shape))
@@ -48,9 +49,11 @@ class EvaluationModule(pl.LightningModule):
         metrics: list,
         metrics_kwargs: list,
         metrics_names: list,
+        result_path : str,
     ):
         super(EvaluationModule, self).__init__()
 
+        self.result_path = result_path
         self.nn = nn
 
         self.explainers = explainers
@@ -100,19 +103,30 @@ class EvaluationModule(pl.LightningModule):
         results = self.forward(inputs, mask)
 
         for i, exp_name in enumerate(self.exp_names):
+            path = f"{self.result_path}/{exp_name}"
+            os.makedirs( path, exist_ok = True)
+
             for j, metric_name in enumerate(self.metrics_names):
 
                 result = results[i, j]
                 result = torch.tensor(
                     [result[b, targets[b]] for b in range(len(result))]
-                ).mean()
+                )
                 self.log(
                     f"{exp_name}-{metric_name}",
-                    result,
+                    result.mean(),
                     on_epoch=True,
                     on_step=True,
                     prog_bar=True,
                 )
+            
+                try:
+                    back_results = torch.load( f"{path}/{metric_name}.pt" )
+                    back_results = torch.stack( [back_results, result.cpu() ], dim = 0 )
+
+                    torch.save( back_results, f"{path}/{metric_name}.pt")
+                except:
+                    torch.save( result.cpu(), f"{path}/{metric_name}.pt")
 
     def test_step(self, batch, batch_idx):
         # Logica di training
@@ -131,19 +145,32 @@ class EvaluationModule(pl.LightningModule):
         results = self.forward(inputs, mask)
         # print(results.shape )
         for i, exp_name in enumerate(self.explainers_names):
+            path = f"{self.result_path}/{exp_name}"
+            os.makedirs( path, exist_ok = True)
+
             for j, metric_name in enumerate(self.metrics_names):
 
                 result = results[i, j].clone()
                 result = torch.stack(
                     [result[b, targets[b]] for b in range(len(result))], dim=0
-                ).mean()
+                )
+
                 self.log(
                     f"{exp_name}-{metric_name}",
-                    result,
+                    result.mean(),
                     on_epoch=True,
                     on_step=True,
                     prog_bar=True,
                 )
+
+                try:
+                    back_results = torch.load( f"{path}/{metric_name}.pt" )
+                    back_results = torch.stack( [back_results, result.cpu() ], dim = 0 )
+
+                    torch.save( back_results, f"{path}/{metric_name}.pt")
+                except:
+                    torch.save( result.cpu(), f"{path}/{metric_name}.pt")
+
 
 
 def evaluation_script(
@@ -166,6 +193,7 @@ def evaluation_script(
         metrics=metrics,
         metrics_names=metrics_names,
         metrics_kwargs=metrics_kwargs,
+        result_path=checkpoint_path,
     )
 
     trainer = pl.Trainer(
@@ -207,7 +235,7 @@ from src.metrics.complexity import Complexity
 torch.set_float32_matmul_precision('medium')
 
 batch_size = 256
-setups = [0, 1, 2]
+setups = [1, 2]
 
 n_points_tsg = 10
 nperseg = 100
@@ -217,9 +245,8 @@ if __name__ == "__main__":
 
     for setup in setups:
 
-        dataset = SyntDataset(setup = setup, nperseg=nperseg, return_mask=True)
+        data = SyntDataset(setup = setup, nperseg=nperseg, return_mask=True)
 
-        data = SyntDataset(return_mask=True)
         loader = DataLoader(
             data,
             batch_size=batch_size,

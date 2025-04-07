@@ -4,6 +4,8 @@ from collections import OrderedDict
 
 import torch
 import torch.nn as nn
+from torch.utils.data import SubsetRandomSampler, DataLoader
+
 
 import sys, os
 from tqdm.autonotebook import tqdm
@@ -12,166 +14,155 @@ from loguru import logger
 
 import pytorch_lightning as pl
 
-pl.seed_everything(1000)
+pl.seed_everything(56, workers=True)
+torch.set_float32_matmul_precision("high")
 
 sys.path.append(os.getcwd())
 
+batch_size = 256
 
-##### DATA LOADING #######
 from src.synt_data import SyntDataset
+from src.train.model import TimeModule
+from src.explainer_wrapper import explainer_wrapper, localization, lle, irof
 
 logger.info("Loading dataset")
 
 
-data = SyntDataset(return_mask=True)
+for setup in [ 0, 1, 2 ]:
 
-from torch.utils.data import SubsetRandomSampler, DataLoader
+    data = SyntDataset(return_mask=True, setup = setup )
 
-batch_size = 256
+    loader = DataLoader(
+        data,
+        batch_size=batch_size,
+        sampler=SubsetRandomSampler(list(range(len(data) - data.n_samples))),
+    )
 
-loader = DataLoader(
-    data,
-    batch_size=batch_size,
-    sampler=SubsetRandomSampler(list(range(len(data) - data.n_samples))),
-)
+    logger.info("Loading model from checkpoint")
 
-######  MODEL LOADING ######
+    fn = TimeModule.load_from_checkpoint(
+       f"output/model/setup{setup}/checkpoint.ckpt",
+        n_classes=data.n_class,
+    ).eval() 
+    fn = nn.Sequential(OrderedDict([("fn", fn), ("softmax", nn.Softmax(dim=-1))])).to( "cpu" )
 
-from src.train.model import TimeModule
+    logger.info("Model and data loaded, preparing explanation experiment...")
 
-logger.info("Loading model from checkpoint")
+    baseline_size = 4 * batch_size
+    baseline = torch.randperm(len(data))[:baseline_size].long()
 
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-fn = TimeModule.load_from_checkpoint(
-    "output/model/checkpoint/epoch=19-step=21686-val_acc=0.93.ckpt",
-    n_classes=data.n_class,
-).eval()
-fn = nn.Sequential(OrderedDict([("fn", fn), ("softmax", nn.Softmax(dim=-1))])).to(
-    device
-)
+    baseline, _, _ = data[baseline]
 
-
-# Explanations methods
-
-from src.explainer_wrapper import explainer_wrapper, localization, lle, irof
-
-logger.info("Model and data loaded, preparing explanation experiment...")
-
-baseline_size = 4 * batch_size
-baseline = torch.randperm(len(data))[:baseline_size].long()
-
-baseline, _, _ = data[baseline]
-
-methods = [
-    {
-        "method": "WSpectralGradients",
-    },
-    {
-        "method": "SpectralGradients",
-    },
-    {
-        "method": "Saliency",
-    },
-    {
-        "method": "InputXGrad",
-    },
-    {
-        "method": "ExpectedGradients",
-        "baseline": baseline,
-    },
-    {
-        "method": "IntegratedGradients",
-    },
-]
-
-for method in methods:
-
-    method["model"] = fn
-
-    method["loc"] = []
-    method["irof"] = []
-    method["lle"] = []
-
-
-for batch in tqdm(loader):
-
-    x_batch, m_batch, y_batch = batch
+    methods = [
+        {
+            "method": "WSpectralGradients",
+        },
+        {
+            "method": "SpectralGradients",
+        },
+        {
+            "method": "Saliency",
+        },
+        {
+            "method": "InputXGrad",
+        },
+        {
+            "method": "ExpectedGradients",
+            "baseline": baseline,
+        },
+        {
+            "method": "IntegratedGradients",
+        },
+    ]
 
     for method in methods:
 
         method["model"] = fn
 
-        method["inputs"] = x_batch
-        method["targets"] = y_batch
+        method["loc"] = []
+        method["irof"] = []
+        method["lle"] = []
 
-        explainer, a_batch = explainer_wrapper(**method)
 
-        if method["method"] == "SpectralGradients":
-            explainer_ = explainer
+    for batch in tqdm(loader):
 
-            def explainer(x):
-                explainer_.to(device)
-                explanations = explainer_(x)
+        x_batch, m_batch, y_batch = batch
 
-                explanations = explanations.sum(dim=2)
-                explainer_.to("cpu")
-                return explanations
+        for method in methods:
 
-        elif method["method"] == "WSpectralGradients":
-            explainer_ = explainer
+            method["model"] = fn
 
-            def explainer(x):
-                explainer_.to(device)
-                explanations = explainer_(x)
+            method["inputs"] = x_batch
+            method["targets"] = y_batch
 
-                weights = torch.abs(explanations.sum(dim=-1))  # frequency weights
-                explanations = explanations * weights.unsqueeze(-1)
-                explanations = explanations.sum(dim=2)
-                explainer_.to("cpu")
-                return explanations
+            explainer, a_batch = explainer_wrapper(**method)
 
-        else:
-            pass
+            if method["method"] == "SpectralGradients":
+                explainer_ = explainer
 
-        logger.info(f"Evaluating {method["method"]} with LLE")
-        method["lle"] += [
-            lle(
-                explainer=explainer,
-                model=fn,
-                x=x_batch,
-                y=y_batch,
-                attr=a_batch,
-                mask=m_batch,
-            ).item()
-        ]
+                def explainer(x):
+                    explainer_.to(device)
+                    explanations = explainer_(x)
 
-        logger.info(f"Evaluating {method["method"]} with IROF")
-        method["irof"] += [
-            irof(
-                explainer=explainer,
-                model=fn,
-                x=x_batch,
-                y=y_batch,
-                attr=a_batch,
-                mask=m_batch,
-            ).item()
-        ]
+                    explanations = explanations.sum(dim=2)
+                    explainer_.to("cpu")
+                    return explanations
 
-        logger.info(f"Evaluating {method["method"]} with Localization")
-        method["loc"] += [
-            localization(
-                explainer=explainer,
-                model=fn,
-                x=x_batch,
-                y=y_batch,
-                attr=a_batch,
-                mask=m_batch,
-            ).item()
-        ]
+            elif method["method"] == "WSpectralGradients":
+                explainer_ = explainer
 
-        np.savez(
-            f"output/metrics/{method["method"]}.npz",
-            irof=np.array(method["irof"]),
-            lle=np.array(method["lle"]),
-            loc=np.array(method["loc"]),
-        )
+                def explainer(x):
+                    explainer_.to(device)
+                    explanations = explainer_(x)
+
+                    weights = torch.abs(explanations.sum(dim=-1))  # frequency weights
+                    explanations = explanations * weights.unsqueeze(-1)
+                    explanations = explanations.sum(dim=2)
+                    explainer_.to("cpu")
+                    return explanations
+
+            else:
+                pass
+
+            logger.info(f"Evaluating {method["method"]} with LLE")
+            method["lle"] += [
+                lle(
+                    explainer=explainer,
+                    model=fn,
+                    x=x_batch,
+                    y=y_batch,
+                    attr=a_batch,
+                    mask=m_batch,
+                ).item()
+            ]
+
+            logger.info(f"Evaluating {method["method"]} with IROF")
+            method["irof"] += [
+                irof(
+                    explainer=explainer,
+                    model=fn,
+                    x=x_batch,
+                    y=y_batch,
+                    attr=a_batch,
+                    mask=m_batch,
+                ).item()
+            ]
+
+            logger.info(f"Evaluating {method["method"]} with Localization")
+            method["loc"] += [
+                localization(
+                    explainer=explainer,
+                    model=fn,
+                    x=x_batch,
+                    y=y_batch,
+                    attr=a_batch,
+                    mask=m_batch,
+                ).item()
+            ]
+
+            np.savez(
+                f"output/metrics/{method["method"]}.npz",
+                irof=np.array(method["irof"]),
+                lle=np.array(method["lle"]),
+                loc=np.array(method["loc"]),
+            )

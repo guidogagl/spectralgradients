@@ -69,16 +69,16 @@ class TimeModule(pl.LightningModule):
 
         loss = self.loss(outputs, targets)
 
-        self.log(f"{log}_loss", loss, prog_bar=True)
-        self.log(f"{log}_acc", self.wacc(outputs, targets), prog_bar=True)
-        self.log(f"{log}_f1", self.wf1(outputs, targets), prog_bar=True)
+        self.log(f"{log}_loss", loss, prog_bar=True, sync_dist=True)
+        self.log(f"{log}_acc", self.wacc(outputs, targets), prog_bar=True, sync_dist=True)
+        self.log(f"{log}_f1", self.wf1(outputs, targets), prog_bar=True, sync_dist=True)
 
         if log_metrics:
-            self.log(f"{log}_ck", self.ck(outputs, targets))
-            self.log(f"{log}_pr", self.pr(outputs, targets))
-            self.log(f"{log}_rc", self.rc(outputs, targets))
-            self.log(f"{log}_macc", self.macc(outputs, targets))
-            self.log(f"{log}_mf1", self.mf1(outputs, targets))
+            self.log(f"{log}_ck", self.ck(outputs, targets), sync_dist=True)
+            self.log(f"{log}_pr", self.pr(outputs, targets), sync_dist=True)
+            self.log(f"{log}_rc", self.rc(outputs, targets), sync_dist=True)
+            self.log(f"{log}_macc", self.macc(outputs, targets), sync_dist=True)
+            self.log(f"{log}_mf1", self.mf1(outputs, targets), sync_dist=True)
 
         return loss
 

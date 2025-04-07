@@ -9,9 +9,6 @@ from scipy import signal
 
 def stopband_filter(x, fs, cutoff, filter_type="low", order=5):
     
-    nyquist = 0.5 * fs
-    normal_cutoff = cutoff / nyquist
-
     if filter_type == "low":
         b, a = signal.butter(order, cutoff, fs = fs, btype='lowpass')
     elif filter_type == "high":
