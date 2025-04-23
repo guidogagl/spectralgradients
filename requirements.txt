@@ -11,3 +11,4 @@ ipywidgets
 matplotlib
 tensorboard
 lightning
+seaborn

@@ -123,7 +123,6 @@ class EvaluationModule(pl.LightningModule):
                 try:
                     back_results = torch.load( f"{path}/{metric_name}.pt" )
                     back_results = torch.stack( [back_results, result.cpu() ], dim = 0 )
-
                     torch.save( back_results, f"{path}/{metric_name}.pt")
                 except:
                     torch.save( result.cpu(), f"{path}/{metric_name}.pt")
@@ -163,13 +162,17 @@ class EvaluationModule(pl.LightningModule):
                     prog_bar=True,
                 )
 
-                try:
-                    back_results = torch.load( f"{path}/{metric_name}.pt" )
-                    back_results = torch.stack( [back_results, result.cpu() ], dim = 0 )
-
+                if batch_idx == 0:
+                    torch.save( result.detach().cpu().reshape(-1), f"{path}/{metric_name}.pt")
+                else:
+                    try:                       
+                        back_results = torch.load( f"{path}/{metric_name}.pt" )
+                    except:
+                        logger.error( f"File {path}/{metric_name}.pt not found" )
+                        exit()
+                        
+                    back_results = torch.cat( [back_results, result.detach().cpu().reshape(-1) ] )
                     torch.save( back_results, f"{path}/{metric_name}.pt")
-                except:
-                    torch.save( result.cpu(), f"{path}/{metric_name}.pt")
 
 
 
@@ -235,7 +238,7 @@ from src.metrics.complexity import Complexity
 torch.set_float32_matmul_precision('medium')
 
 batch_size = 256
-setups = [1, 2]
+setups = [0, 1, 2]
 
 n_points_tsg = 10
 nperseg = 100
@@ -310,16 +313,16 @@ if __name__ == "__main__":
         explainers_names = ["sal", "ixg", "ig", "eg", "tsgh", "tsgl"]
 
         metrics = [
-            Localization,
-            Complexity,
-            Infidelity,
-            #LLE,
+            #Localization,
+            #Complexity,
+            #Infidelity,
+            LLE,
         ]
 
         metrics_kwargs = [{}, {}, {}, {}]
 
-        metrics_names = ["loc", "comp", "inf"] # , "lle"
-
+        #metrics_names = ["loc", "comp", "inf"] # , "lle"
+        metrics_names = ["lle"] 
         evaluation_script(
             nn=nn,
             loader=loader,

@@ -20,6 +20,33 @@ class Localization(nn.Module):
         attr = nn.functional.relu(attr)
 
         Rtot = attr.sum( -1 ) # b, m
+        
+        Rtot = torch.where(Rtot > 0, Rtot, float("inf"))
+
+        Rin = torch.einsum("bmn,bn->bm", attr, mask.float())
+        mu = torch.einsum("bm,bm->bm", Rin, 1 / Rtot)
+
+        Stot = torch.ones_like( mask ).sum( -1 ) # b
+        Sin = mask.sum( -1 )
+
+        return torch.einsum("bm,b->bm", mu, (Stot / Sin))
+
+
+class TFLocalization(nn.Module):
+    def __init__(self, f: nn.Module = None, exp: nn.Module = None, name: str = "tfloc"):
+        super(TFLocalization, self).__init__()
+
+        self.name = name
+
+    @torch.no_grad()
+    def forward(self, x, attr, mask):
+
+        attr = torch.einsum( "bmfn,bn->bmfn", attr, torch.sign(x))
+        attr = nn.functional.relu(attr)
+
+        attr = attr.sum( -2 ) # b, m, n        
+        Rtot = attr.sum( -1 ) # b, m
+        
         Rtot = torch.where(Rtot > 0, Rtot, float("inf"))
 
         Rin = torch.einsum("bmn,bn->bm", attr, mask.float())
