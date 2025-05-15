@@ -281,18 +281,18 @@ if __name__ == "__main__":
 
         explainers = torch.nn.ModuleList(
             [
-                Saliency(f=nn),
-                InputXGradient(f=nn),
-                IntegratedGradients(
-                    f=nn, 
-                    baselines=torch.zeros(batch_size, *data[0][0].shape),
-                    n_points= n_points
-                ),
-                ExpectedGradients(
-                    f=nn, 
-                    baselines=baseline,
-                    n_points= n_points
-                ),
+                #Saliency(f=nn),
+                #InputXGradient(f=nn),
+                #IntegratedGradients(
+                #    f=nn, 
+                #    baselines=torch.zeros(batch_size, *data[0][0].shape),
+                #    n_points= n_points
+                #),
+                #ExpectedGradients(
+                #    f=nn, 
+                #    baselines=baseline,
+                #    n_points= n_points
+                #),
                 TSG( 
                     f = nn, 
                     fs = fs,
@@ -310,19 +310,19 @@ if __name__ == "__main__":
             ]
         )
 
-        explainers_names = ["sal", "ixg", "ig", "eg", "tsgh", "tsgl"]
+        explainers_names = ["tsgh", "tsgl"] # "sal", "ixg", "ig", "eg", 
 
         metrics = [
-            #Localization,
-            #Complexity,
-            #Infidelity,
-            LLE,
+            Localization,
+            Complexity,
+            Infidelity,
+            #LLE,
         ]
 
         metrics_kwargs = [{}, {}, {}, {}]
 
-        #metrics_names = ["loc", "comp", "inf"] # , "lle"
-        metrics_names = ["lle"] 
+        metrics_names = ["loc", "comp", "inf"] # , "lle"
+        
         evaluation_script(
             nn=nn,
             loader=loader,

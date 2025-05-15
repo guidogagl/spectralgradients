@@ -25,8 +25,9 @@ from sklearn.neighbors import KNeighborsClassifier
 
 ##### PARAMETERS #####
 
+data_folder = "/scratch/leuven/365/vsc36564/"
 dataset = "sleepedf"
-batch_size = 256
+batch_size = 32
 
 #####
 
@@ -46,7 +47,14 @@ if not os.path.exists(basedir):
 ###################
 
 def get_importances( model, datamodule, basedir = basedir ):
-        # check if the data is already cached in memory
+    # check if the data is already cached in memory
+    
+    basedir = os.path.join(basedir, "cache" )
+    if not os.path.exists(basedir):
+        os.makedirs(basedir)
+        
+    print(f"Creating directory {basedir}")
+        
     if  os.path.exists(os.path.join(basedir, "x_train.npy")) and \
         os.path.exists(os.path.join(basedir, "y_train.npy")) and \
         os.path.exists(os.path.join(basedir, "y_hat_train.npy")):
@@ -316,85 +324,3 @@ if __name__ == "__main__":
     logger.info("Seeding...")
     seed_everything(42, workers=True)
     set_float32_matmul_precision("medium")
-
-    logger.info("Loading model...")
-    from src.sleep.train import TinyTransformerNet
-    # Load the model
-
-    model_kwargs = {
-        "n_classes": 5,
-        "sf" : 100,
-        "in_channels": 1,
-        "sequence_length" : 21,
-    
-        "loss" : "physioex.train.networks.utils.loss:CrossEntropyLoss",
-        "loss_kwargs": {},
-
-        "learning_rate" : .0001,
-        "weight_decay" :  .000001,
-    }
-    
-    model = TinyTransformerNet.load_from_checkpoint( ckpt_path, config = model_kwargs ).eval()
-    # add a softmax layer to the model
-    model = torch.nn.Sequential(
-        model,
-        torch.nn.Softmax(dim=-1)
-    )
-
-    model = model.to(device)
-    # print model summary
-    print(model)
-        
-    logger.info("Loading dataset...")    
-    datamodule = PhysioExDataModule(
-        datasets = [dataset],
-        batch_size = batch_size,
-        data_folder = os.environ["PHYSIOEXDATA"],
-        num_workers = os.cpu_count(),
-    )
-
-    logger.info("Evaluating model on the test set...")
-    evaluate_model(model, datamodule.test_dataloader())
-    
-    logger.info("Pruning the training set...")
-    #remove the missclassification from the training set
-    mask = ( y_train == np.argmax( y_hat_train, axis = -1 ) )
-    x_train = x_train[mask]
-    y_train = y_train[mask]
-    y_hat_train = y_hat_train[mask]
-
-    # normalize the data    
-    x_train = normalize( x_train )
-    x_val = normalize( x_val )
-    x_test = normalize( x_test )
-
-    #logger.info("Evaluating best k...")
-    #k = evaluate_best_k( x_train, y_train, x_val, y_val, y_hat_val )
-    
-    k = 5
-    
-    logger.info("Predicting mixed on test set...")
-    y_imp_preds = predict_mixed( x_train, y_train, k, x_test, y_hat_test )
-    
-    # plot the confusion matrix
-    disp = ConfusionMatrixDisplay.from_predictions(
-        y_test,
-        y_imp_preds,
-        display_labels=["Wake", "NREM1", "NREM2", "NREM3", "REM"],
-        cmap=plt.cm.Blues,
-        normalize="true",
-        include_values=True,
-        values_format=".2%",
-    )
-
-    disp.ax_.set_title("Confusion Matrix")
-
-    plt.savefig(os.path.join(basedir, "confusion_matrix_imp.png"), dpi=300)
-    plt.close()
-    
-    # print the classification report and save it to a csv file
-    #report = classification_report(y_true, y_pred, target_names=["Wake", "NREM1", "NREM2", "NREM3", "REM"])
-    report = classification_report(y_test, y_imp_preds, target_names=["Wake", "NREM1", "NREM2", "NREM3", "REM"], output_dict=True)
-    report_df = pd.DataFrame(report).transpose()
-    report_df.to_csv(os.path.join(basedir, "classification_report_imp.csv"))
-    print(report_df)

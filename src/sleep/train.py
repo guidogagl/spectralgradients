@@ -14,18 +14,21 @@ from physioex.train.networks.sleeptransformer import PositionalEncoding
 from torch import nn
 import os
 
+
 module_config = {}
 class TransformerClassifier(nn.Module):
     def __init__(self, config=module_config):
         super(TransformerClassifier, self).__init__()
         self.config = config
         
-        self.pe = PositionalEncoding( 2048 * config["in_channels"] )
+        self.reduce = nn.Linear( 2048, 128 )
+        
+        self.pe = PositionalEncoding( 128 )
 
         t_layer = nn.TransformerEncoderLayer(
-            d_model = 2048 * config["in_channels"],
-            nhead=8*16,
-            dim_feedforward=1024,
+            d_model = 128,
+            nhead = 8,
+            dim_feedforward=128,
             dropout=0.5,
             batch_first=True,
         )
@@ -36,97 +39,143 @@ class TransformerClassifier(nn.Module):
         )
         
         self.clf = nn.Linear(
-            2048 * config["in_channels"], config["n_classes"]
+            128, config["n_classes"]
         )
 
     def forward(self, x):
+        x = self.reduce(x)
+        x = nn.functional.relu(x)
+        
         x = self.pe(x)
         x = self.encoder(x)
         x = self.clf(x)
         return x
 
     def encode(self, x):
+        x = self.reduce(x)
+        x = nn.functional.relu(x)
+        
         x = self.pe(x)
         x = self.encoder(x)
         return x
-
-
-def agument_data( batch ):
-    inputs, targets = batch
-    
-    batch_size, seqlen, inchan, timestamps = inputs.shape
-    
-    # reshape the data to ignore the sequences
-    
-    inputs = inputs.reshape( batch_size * seqlen, inchan, timestamps )
-    targets = targets.reshape( batch_size * seqlen )
-    
-    # select randomly 1/6 of the data to be background data
-    indx = torch.randperm( inputs.shape[0] )[:inputs.shape[0] // 6]
-    
-    # randn -> random normal distribution [-3, 3]
-    inputs[ indx ] = torch.randn( inputs[indx].shape ).to(inputs.device) * 0.1
-    targets[ indx ] = 5 # background class    
-    
-    # reshape the data back to the original shape
-    inputs = inputs.reshape( batch_size, seqlen, inchan, timestamps )
-    targets = targets.reshape( batch_size, seqlen )
-    
-    return inputs, targets
 
 class TinyTransformerNet( TinySleepNet ):
     def __init__(self, module_config):
         # add one class for the background data
         # 5 stages + 1 background
-        module_config["n_classes"] = 6 
-        
-        super(TinyTransformerNet, self).__init__( module_config=module_config )
+            
+        super(TinyTransformerNet, self).__init__( module_config=module_config )        
+
         self.nn.clf = TransformerClassifier( config=module_config )
 
-    # redefine the train and validation step to add the background data 
+        self.debias = module_config["debias"]
+
+    def compute_loss(
+        self,
+        embeddings,
+        outputs,
+        targets,
+        log: str = "train",
+        log_metrics: bool = False,
+    ):
+
+        batch_size, seq_len, n_class = outputs.size()
+
+        embeddings = embeddings.reshape(batch_size * seq_len, -1)
+        outputs = outputs.reshape(-1, n_class)
+        targets = targets.reshape(-1)
+        
+        loss = self.loss(embeddings, outputs, targets)
+
+        self.log(f"{log}_loss", loss, prog_bar=True, sync_dist=True)
+        
+        # now we compute the loss term in 0
+        zero_pred = self( torch.zeros( 1, 21, 1, 3000).float().to( embeddings.device )).view(-1, n_class)
+        zero_pred = torch.nn.functional.softmax( zero_pred, dim = -1 )[:, -1]
+        self.log(f"{log}_zero_conf", zero_pred.mean(), prog_bar=True, sync_dist=True)
+
+        # we want the output to converge to 0 hence -log(1 - x)
+        zero_pred = - torch.log( zero_pred ).view(-1).mean()
+        
+        # loss = loss + zero_pred
+
+        # now we want that for any other class in the problem the confidence of the background class is 0
+        #zero_pred = torch.nn.functional.softmax( outputs, dim =-1 )[:, -1]
+        #zero_pred = - torch.log( 1 - zero_pred ).view(-1).mean()
+        
+        #loss = loss + zero_pred
+                
+        self.log(f"{log}_acc", self.wacc(outputs, targets), prog_bar=True, sync_dist=True)
+        
+        if log_metrics and self.n_classes > 1:
+            self.log(f"{log}_f1", self.wf1(outputs, targets), sync_dist=True)
+            self.log(f"{log}_ck", self.ck(outputs, targets), sync_dist=True)
+            self.log(f"{log}_pr", self.pr(outputs, targets), sync_dist=True)
+            self.log(f"{log}_rc", self.rc(outputs, targets), sync_dist=True)
+            self.log(f"{log}_macc", self.macc(outputs, targets), sync_dist=True)
+            self.log(f"{log}_mf1", self.mf1(outputs, targets), sync_dist=True)
     
-    def training_step(self, batch, batch_idx):        
-        return super().training_step( agument_data(batch), batch_idx)
+        return loss
 
-    # def validation_step(self, batch, batch_idx):
-    #    return super().validation_step(agument_data(batch), batch_idx)
-
+    
 if __name__ == "__main__":
     
     dataset = "sleepedf"
-    batch_size = 32
-     
+    batch_size = 128
+    debias = False
+    data_folder = "/scratch/leuven/365/vsc36564/"
+    
     datamodule = PhysioExDataModule(
             datasets = [dataset],
             batch_size = batch_size,
-            data_folder = os.environ["PHYSIOEXDATA"],
+            data_folder = data_folder,
             num_workers = os.cpu_count(),
     )
 
     model_kwargs = {
-        "n_classes": 5,
+        "n_classes": 6,
         "sf" : 100,
         "in_channels": 1,
         "sequence_length" : 21,
     
         "loss" : "physioex.train.networks.utils.loss:CrossEntropyLoss",
         "loss_kwargs": {},
+        "debias" : debias,
 
         "learning_rate" : .0001,
         "weight_decay" :  .000001,
     }
-
-
-
+    
+    
+    
     train_kwargs = {
         "datasets": datamodule,
-        "model": TinyTransformerNet( model_kwargs ),
         "num_validations": 10,
-        "checkpoint_path": f"output/model/tinytransformer/{dataset}/",
-        "max_epochs": 20,
-        "resume": True,
+        "max_epochs": 100,
     }
 
+    if debias:
+        train_kwargs["checkpoint_path"] = f"output/model/tinytransformer/{dataset}/debiased/"
+        
+    else:
+        train_kwargs["checkpoint_path"] = f"output/model/tinytransformer/{dataset}/standard/"
+    
+    # create the directory if it does not exist
+    os.makedirs(train_kwargs["checkpoint_path"], exist_ok=True)
+    
+    # check if there is already a checkpoint
+    # list all files in the directory
+    ckpt_files = [ ckpt for ckpt in os.listdir( train_kwargs["checkpoint_path"] ) if ckpt.endswith(".ckpt") ]
+    if len( ckpt_files ) > 0:
+        # load the model
+        train_kwargs["model"] = TinyTransformerNet.load_from_checkpoint( os.path.join( train_kwargs["checkpoint_path"], ckpt_files[0] ), model_config = model_kwargs )
+        print( f"Loading checkpoint {ckpt_files[0]} from {train_kwargs['checkpoint_path']}")
+    else:
+        if not debias:
+            train_kwargs["model"] = TinyTransformerNet( model_kwargs )
+        else:
+            train_kwargs["model"] = TinyTransformerNet.load_from_checkpoint( f"output/model/tinytransformer/{dataset}/standard/checkpoint.ckpt", model_config = model_kwargs )
+    
     best_checkpoint = train(**train_kwargs)
     best_checkpoint = os.path.join(train_kwargs["checkpoint_path"], best_checkpoint)
 
@@ -135,7 +184,7 @@ if __name__ == "__main__":
     test(
         datasets=datamodule,
         model=model,
-        batch_size=32,
-        results_path="output/model/tinytransformer/",
+        batch_size=batch_size,
+        results_path=train_kwargs["checkpoint_path"],
         aggregate_datasets= False,
     )

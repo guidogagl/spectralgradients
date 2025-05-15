@@ -38,7 +38,7 @@ def freqs_path_integral(fn: nn.Module, x, fs, nperseg, Q=5, strategy="highest", 
     #steps = steps[1:]
     start = x
 
-    Den = 1 / ( fn( x ) - fn ( torch.zeros_like(x) )) 
+    # Den = 1 / ( fn( x ) - fn ( torch.zeros_like(x) )) 
 
     for i in range(1, len(steps)):
         
@@ -67,11 +67,11 @@ def freqs_path_integral(fn: nn.Module, x, fs, nperseg, Q=5, strategy="highest", 
         W = W.flip(2)
         SG = SG.flip(2)
 
-    W = torch.einsum( "bmf,bm->bmf", W, Den)
-
+    # W = torch.einsum( "bmf,bm->bmf", W, Den)
     W = torch.nn.functional.relu( W )
     W = torch.round(W, decimals = 3)
-        
+
+    W = torch.einsum( "bmf,bm->bmf", W, 1 / (W.sum(dim = -1) + 1e-8))   
     return W, SG
 
 
