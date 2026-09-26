@@ -1,0 +1,35 @@
+# STFT benchmark configuration for arrhythmia
+model: arrhythmia-cnn
+explainers:
+  - IG-time
+  - IG-bal
+  - IG-freq
+  - Sal-time
+  - Sal-bal
+  - Sal-freq
+  - IxG-time
+  - IxG-bal
+  - IxG-freq
+max_samples: 200
+gpu: 0
+seed: 42
+
+sg:
+  path: shapley
+  steps: 10
+  perms: 20
+  freq_step: 5.0
+  batch_size: 10
+
+stft:
+  real_valued: true
+  steps: 340  # sg_steps(10) x n_bands(34)
+
+metrics:
+  conf_thresh: 0.6
+  freq_patch_size: 5
+  time_patch_size: 20
+
+output:
+  save_samples: false
+  save_attributions: false

@@ -1,0 +1,33 @@
+# Audio benchmark configuration for SpeechCommands model
+# Usage: python audio/benchmark.py --config configs/audio/audio-wavcnn_sg.yaml --explainer <E> --max-samples <N> --seed 42
+
+model: audio-wavcnn
+explainers:
+  - SG
+max_samples: 200
+gpu: 0
+seed: 42
+
+# SpectralGradients specific parameters
+sg:
+  path: shapley      # shapley or both
+  steps: 10          # Number of steps for path approximation
+  perms: 100         # Number of permutations (optimized)
+  freq_step: 50.0    # Frequency step size (optimized: 5% of fs=1000Hz)
+  batch_size: 1      # Process 1 samples at a time (optimized for GPU)
+
+# STFT-specific parameters
+stft:
+  real_valued: true
+  steps: 10
+
+# Metrics parameters
+metrics:
+  conf_thresh: 0.01      # Lower threshold for audio model (has low individual confidence)
+  freq_patch_size: 20    # Ablation patch size for freq_infidelity
+  time_patch_size: 500   # Ablation patch size for time_infidelity
+
+# Output options
+output:
+  save_samples: false      # Save collected samples to disk
+  save_attributions: false  # Save raw attributions for each explainer

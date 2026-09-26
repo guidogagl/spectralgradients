@@ -1,0 +1,131 @@
+[
+ {
+  "case": "Sleep-MASS",
+  "n": 5355,
+  "rival": "IxG-time",
+  "metrics": {
+   "freq_infidelity": {
+    "median_fine": 0.027384156361222267,
+    "median_coarse": 0.03424682095646858,
+    "median_rival": 0.066810742020607,
+    "delta_coarse_vs_fine": 0.21355683013946325,
+    "delta_coarse_vs_rival": -0.376035590706871,
+    "delta_fine_vs_rival": -0.49245054012890555,
+    "p_coarse_vs_fine": 1.1961870938351118e-81
+   },
+   "freq_complexity": {
+    "median_fine": 0.598073422908783,
+    "median_coarse": 0.6487714648246765,
+    "median_rival": 0.8008633255958557,
+    "delta_coarse_vs_fine": 0.3965199500279415,
+    "delta_coarse_vs_rival": -0.9331247618873257,
+    "delta_fine_vs_rival": -0.9844126931818479,
+    "p_coarse_vs_fine": 1.3609472280646288e-276
+   },
+   "time_infidelity": {
+    "median_fine": 0.026031726971268654,
+    "median_coarse": 0.01935676671564579,
+    "median_rival": 0.08432676643133163,
+    "delta_coarse_vs_fine": -0.12028026897033328,
+    "delta_coarse_vs_rival": -0.5962950234560055,
+    "delta_fine_vs_rival": -0.508054341562333,
+    "p_coarse_vs_fine": 4.30038069572462e-27
+   },
+   "time_complexity": {
+    "median_fine": 0.9371755123138428,
+    "median_coarse": 0.9290134906768799,
+    "median_rival": 0.913116455078125,
+    "delta_coarse_vs_fine": -0.3846898585142118,
+    "delta_coarse_vs_rival": 0.44724462333953197,
+    "delta_fine_vs_rival": 0.6741690663193383,
+    "p_coarse_vs_fine": 1.842094265653291e-260
+   }
+  }
+ },
+ {
+  "case": "Synt-1",
+  "n": 5000,
+  "rival": "IG-time",
+  "metrics": {
+   "freq_infidelity": {
+    "median_fine": 0.12524420022964478,
+    "median_coarse": 0.13602645695209503,
+    "median_rival": 0.125087670981884,
+    "delta_coarse_vs_fine": 0.10722424000000008,
+    "delta_coarse_vs_rival": 0.09677500000000006,
+    "delta_fine_vs_rival": -0.01305347999999995,
+    "p_coarse_vs_fine": 1.1368153587058387e-20
+   },
+   "freq_complexity": {
+    "median_fine": 0.6611382067203522,
+    "median_coarse": 0.7328605651855469,
+    "median_rival": 0.7676568031311035,
+    "delta_coarse_vs_fine": 0.52208772,
+    "delta_coarse_vs_rival": -0.33961680000000005,
+    "delta_fine_vs_rival": -0.6601300800000001,
+    "p_coarse_vs_fine": 0.0
+   },
+   "time_infidelity": {
+    "median_fine": 0.19612427055835724,
+    "median_coarse": 0.1847744733095169,
+    "median_rival": 0.9176572263240814,
+    "delta_coarse_vs_fine": -0.010760919999999952,
+    "delta_coarse_vs_rival": -0.42658396,
+    "delta_fine_vs_rival": -0.42233228,
+    "p_coarse_vs_fine": 0.3494702605392478
+   },
+   "time_complexity": {
+    "median_fine": 0.7822801172733307,
+    "median_coarse": 0.7667921483516693,
+    "median_rival": 0.7523569166660309,
+    "delta_coarse_vs_fine": -0.11427092000000005,
+    "delta_coarse_vs_rival": 0.06916911999999997,
+    "delta_fine_vs_rival": 0.17869044,
+    "p_coarse_vs_fine": 4.136400069227559e-23
+   }
+  }
+ },
+ {
+  "case": "Synt-2",
+  "n": 5000,
+  "rival": "IG-time",
+  "metrics": {
+   "freq_infidelity": {
+    "median_fine": 0.11558456346392632,
+    "median_coarse": 0.1605817973613739,
+    "median_rival": 0.10336523503065109,
+    "delta_coarse_vs_fine": 0.33669748,
+    "delta_coarse_vs_rival": 0.37261604000000004,
+    "delta_fine_vs_rival": 0.07242963999999996,
+    "p_coarse_vs_fine": 1.2480768520910396e-187
+   },
+   "freq_complexity": {
+    "median_fine": 0.6423117518424988,
+    "median_coarse": 0.7354516386985779,
+    "median_rival": 0.7726212441921234,
+    "delta_coarse_vs_fine": 0.6772816800000001,
+    "delta_coarse_vs_rival": -0.48916724,
+    "delta_fine_vs_rival": -0.76803964,
+    "p_coarse_vs_fine": 0.0
+   },
+   "time_infidelity": {
+    "median_fine": 0.032148461788892746,
+    "median_coarse": 0.0291169798001647,
+    "median_rival": 0.33599601686000824,
+    "delta_coarse_vs_fine": -0.0093588,
+    "delta_coarse_vs_rival": -0.41956068,
+    "delta_fine_vs_rival": -0.43266492,
+    "p_coarse_vs_fine": 0.4159671514043768
+   },
+   "time_complexity": {
+    "median_fine": 0.7878047227859497,
+    "median_coarse": 0.7770926058292389,
+    "median_rival": 0.7659372389316559,
+    "delta_coarse_vs_fine": -0.08868651999999999,
+    "delta_coarse_vs_rival": 0.06237836000000008,
+    "delta_fine_vs_rival": 0.1531837599999999,
+    "p_coarse_vs_fine": 1.5413654731639948e-14
+   }
+  }
+ }
+]

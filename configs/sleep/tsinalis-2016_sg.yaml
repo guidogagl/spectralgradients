@@ -1,0 +1,33 @@
+# SpectralGradients benchmark configuration for tsinalis-2016 model
+# Usage: python sleep/benchmark.py --config configs/sleep/tsinalis-2016_sg.yaml --explainer <E> --max-samples <N> --seed 42
+
+model: tsinalis-2016
+explainers:
+  - SG
+max_samples: 200
+gpu: 0
+seed: 42
+
+# SpectralGradients specific parameters
+sg:
+  path: shapley      # shapley or both
+  steps: 10          # Number of steps for path approximation
+  perms: 20          # Number of permutations for Shapley value estimation
+  freq_step: 0.5     # Frequency step size for band decomposition
+  batch_size: 1      # Process 1 samples at a time to avoid OOM
+
+# STFT-specific parameters (not used for SG, but kept for consistency)
+stft:
+  real_valued: true
+  steps: 10
+
+# Metrics parameters
+metrics:
+  conf_thresh: 0.6       # Minimum confidence threshold for sample selection
+  freq_patch_size: 1     # Ablation patch size for freq_infidelity
+  time_patch_size: 50    # Ablation patch size for time_infidelity
+
+# Output options
+output:
+  save_samples: false      # Save collected samples to disk (shared by all explainers)
+  save_attributions: false  # Save raw attributions for each explainer

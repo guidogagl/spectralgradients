@@ -1,0 +1,41 @@
+# STFT benchmark configuration for tsinalis-2016 model
+# Usage: python sleep/benchmark.py --config configs/sleep/tsinalis-2016_stft.yaml --explainer <E> --max-samples <N> --seed 42
+
+model: tsinalis-2016
+explainers:
+  - IG-time
+  - IG-bal
+  - IG-freq
+  - Sal-time
+  - Sal-bal
+  - Sal-freq
+  - IxG-time
+  - IxG-bal
+  - IxG-freq
+max_samples: 200
+gpu: 0
+seed: 42
+
+# SpectralGradients specific parameters (not used for STFT)
+sg:
+  path: shapley
+  steps: 10
+  perms: 20
+  freq_step: 2.0
+  batch_size: 0
+
+# STFT-specific parameters
+stft:
+  real_valued: true  # Use real-valued STFT for signed attributions
+  steps: 1010  # sg_steps(10) x n_bands(101)
+
+# Metrics parameters
+metrics:
+  conf_thresh: 0.6
+  freq_patch_size: 1
+  time_patch_size: 50
+
+# Output options
+output:
+  save_samples: false
+  save_attributions: false

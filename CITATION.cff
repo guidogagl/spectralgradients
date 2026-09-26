@@ -1,0 +1,30 @@
+cff-version: 1.2.0
+message: "If you use this code or the per-sample results, please cite the paper and this archive."
+title: "Spectral Gradients: benchmark code and per-sample results"
+version: 1.0.0
+date-released: 2026-09-25
+license: MIT
+repository-code: "https://github.com/guidogagl/spectralgradients"
+doi: 10.5281/zenodo.22964216
+authors:
+  - family-names: Gagliardi
+    given-names: Guido
+    orcid: "https://orcid.org/0000-0003-2020-6439"
+    affiliation: "KU Leuven, Department of Electrical Engineering (ESAT), STADIUS"
+preferred-citation:
+  type: article
+  title: "Spectral Gradients: Disentangled Time-Frequency Attributions to Explain Neural Networks for Time Series"
+  authors:
+    - family-names: Gagliardi
+      given-names: Guido
+    - family-names: Alfeo
+      given-names: Antonio Luca
+    - family-names: Cimino
+      given-names: Mario G. C. A.
+    - family-names: Samek
+      given-names: Wojciech
+    - family-names: De Vos
+      given-names: Maarten
+  journal: "Pattern Recognition"
+  year: 2026
+  notes: "Submitted."

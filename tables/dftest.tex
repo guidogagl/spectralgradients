@@ -1,0 +1,26 @@
+\begin{table}[t]
+\centering
+\setlength{\tabcolsep}{2pt}
+\caption{Sensitivity of SG to the band width $\Delta f$, on identical samples (paired). ``Fine'' is the benchmark setting of Table~\ref{tab:configs}, ``coarse'' a wider band ($0.5 \to 2$~Hz on Sleep-MASS, $2 \to 5$~Hz on Synt-1/2); $\delta$ is Cliff's delta of coarse vs.\ fine (negative: lower with the coarser band); the last column is the best time-optimised STFT rival on the same samples. Sleep-MASS uses a strided $1/8$ subset of the benchmark sample set.}
+\label{tab:dftest}
+\begin{tabular}{@{}llrrrrr@{}}
+\toprule
+\textbf{Case} & \textbf{Metric} & \textbf{SG fine} & \textbf{SG coarse} & $\delta$ & \textbf{Rival} & \textbf{Rival value} \\
+\midrule
+Sleep-MASS & Freq.Inf & 0.0274 & 0.0342\textsuperscript{*} & +0.21 & IxG-time & 0.0668 \\
+ & Freq.Cmplx & 0.5981 & 0.6488\textsuperscript{*} & +0.40 &  & 0.8009 \\
+ & Time.Inf & 0.0260 & 0.0194 & -0.12 &  & 0.0843 \\
+ & Time.Cmplx & 0.9372 & 0.9290\textsuperscript{*} & -0.38 &  & 0.9131 \\
+\addlinespace
+Synt-1 & Freq.Inf & 0.1252 & 0.1360 & +0.11 & IG-time & 0.1251 \\
+ & Freq.Cmplx & 0.6611 & 0.7329\textsuperscript{*} & +0.52 &  & 0.7677 \\
+ & Time.Inf & 0.1961 & 0.1848 & -0.01 &  & 0.9177 \\
+ & Time.Cmplx & 0.7823 & 0.7668 & -0.11 &  & 0.7524 \\
+\addlinespace
+Synt-2 & Freq.Inf & 0.1156 & 0.1606\textsuperscript{*} & +0.34 & IG-time & 0.1034 \\
+ & Freq.Cmplx & 0.6423 & 0.7355\textsuperscript{*} & +0.68 &  & 0.7726 \\
+ & Time.Inf & 0.0321 & 0.0291 & -0.01 &  & 0.3360 \\
+ & Time.Cmplx & 0.7878 & 0.7771 & -0.09 &  & 0.7659 \\
+\bottomrule
+\end{tabular}
+\end{table}

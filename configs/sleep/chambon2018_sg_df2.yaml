@@ -1,0 +1,33 @@
+# Δf-sensitivity test (paper §5.5): identical to chambon2018_sg.yaml except freq_step 0.5 -> 2.0 Hz.
+# Usage: python sleep/benchmark.py --config configs/sleep/chambon2018_sg_df2.yaml --explainer SG --max-samples 999999 --seed 42 --chunk-n 8 --chunk-idx 0
+
+model: chambon2018
+explainers:
+  - SG
+max_samples: 200
+gpu: 0
+seed: 42
+
+# SpectralGradients specific parameters
+sg:
+  path: shapley
+  steps: 10
+  perms: 20
+  freq_step: 2.0
+  batch_size: 1      # Process 1 samples at a time to avoid OOM
+
+# STFT-specific parameters
+stft:
+  real_valued: true
+  steps: 10
+
+# Metrics parameters
+metrics:
+  conf_thresh: 0.6
+  freq_patch_size: 1
+  time_patch_size: 50
+
+# Output options
+output:
+  save_samples: false
+  save_attributions: false

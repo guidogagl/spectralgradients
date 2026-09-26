@@ -1,0 +1,23 @@
+{
+  "title": "Spectral Gradients: benchmark code and per-sample results (v1.0.0)",
+  "upload_type": "software",
+  "description": "<p>Code and per-sample results of the paper <em>Spectral Gradients: Disentangled Time-Frequency Attributions to Explain Neural Networks for Time Series</em> (submitted to Pattern Recognition). The archive contains (i) a snapshot of the GitHub repository at tag v1.0.0: domain loaders, classifier definitions and training scripts (synthetic, ECG, speech, sleep), the unified benchmark against nine STFT-based explainers, the statistical analysis and the table/figure generators; and (ii) <code>spectralgradients-per-sample-results.tar.gz</code>, the per-sample metric values (frequency/time complexity, infidelity and localisation) for every explainer and case study, from which all tables of the paper are computed. The Spectral Gradients method itself is implemented in the PhysioEx library (<a href=\"https://github.com/guidogagl/physioex\">github.com/guidogagl/physioex</a>). Datasets are not redistributed: MIT-BIH and Sleep-EDF are available from PhysioNet, Speech Commands v0.02 from its public distribution, and MASS from the MASS consortium under a data-use agreement.</p>",
+  "creators": [
+    {"name": "Gagliardi, Guido", "affiliation": "KU Leuven", "orcid": "0000-0003-2020-6439"}
+  ],
+  "contributors": [
+    {"name": "Alfeo, Antonio Luca", "affiliation": "eCampus University", "type": "Supervisor"},
+    {"name": "Cimino, Mario G. C. A.", "affiliation": "University of Pisa", "type": "Supervisor"},
+    {"name": "Samek, Wojciech", "affiliation": "Fraunhofer HHI / TU Berlin", "type": "Supervisor"},
+    {"name": "De Vos, Maarten", "affiliation": "KU Leuven", "type": "Supervisor"}
+  ],
+  "license": "MIT",
+  "access_right": "open",
+  "keywords": ["explainable AI", "time-series classification", "time-frequency attribution", "integrated gradients", "Gabor uncertainty principle", "sleep staging", "ECG", "speech"],
+  "related_identifiers": [
+    {"identifier": "https://github.com/guidogagl/spectralgradients", "relation": "isSupplementTo", "scheme": "url"},
+    {"identifier": "https://github.com/guidogagl/physioex", "relation": "requires", "scheme": "url"}
+  ],
+  "version": "1.0.0",
+  "language": "eng"
+}

@@ -1,0 +1,33 @@
+# Synt setup1 benchmark configuration
+# Usage: python synt/benchmark.py --config configs/synt/synt-setup1_sg.yaml --explainer <E> --max-samples <N> --seed 42
+
+model: synt-setup1
+explainers:
+  - SG
+max_samples: 200
+gpu: 0
+seed: 42
+
+# SpectralGradients specific parameters
+sg:
+  path: shapley      # shapley or both
+  steps: 10          # Number of steps for path approximation
+  perms: 20          # Number of permutations for Shapley value estimation
+  freq_step: 2.0     # Frequency step size for band decomposition
+  batch_size: 10     # Process 10 samples at a time to avoid OOM
+
+# STFT-specific parameters
+stft:
+  real_valued: true
+  steps: 10
+
+# Metrics parameters
+metrics:
+  conf_thresh: 0.6       # Minimum confidence threshold for sample selection
+  freq_patch_size: 10    # Ablation patch size for freq_infidelity
+  time_patch_size: 20    # Ablation patch size for time_infidelity
+
+# Output options
+output:
+  save_samples: false      # Save collected samples to disk
+  save_attributions: true  # Save raw attributions for each explainer

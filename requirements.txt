@@ -1,0 +1,16 @@
+# Spectral Gradients and the STFT explainers, metrics and pretrained sleep models live in PhysioEx.
+physioex>=2.0.1,<3
+# Explainers and classifiers
+torch>=2.1
+torchaudio>=2.1,<2.9     # torchaudio.load without torchcodec (Speech Commands)
+numpy>=1.24
+scipy>=1.10
+scikit-learn>=1.3
+pyyaml>=6.0
+tqdm>=4.65
+# Datasets
+wfdb>=4.1                # MIT-BIH Arrhythmia Database
+soundfile>=0.12          # Speech Commands
+# Tables and figures
+matplotlib>=3.7
+seaborn>=0.13

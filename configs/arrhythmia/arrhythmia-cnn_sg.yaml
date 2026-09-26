@@ -1,0 +1,33 @@
+# Arrhythmia CNN benchmark configuration for MIT-BIH model
+# Usage: python arrhythmia/benchmark.py --config configs/arrhythmia/arrhythmia-cnn_sg.yaml --explainer <E> --max-samples <N> --seed 42
+
+model: arrhythmia-cnn
+explainers:
+  - SG
+max_samples: 200
+gpu: 0
+seed: 42
+
+# SpectralGradients specific parameters
+sg:
+  path: shapley      # shapley or both
+  steps: 10          # Number of steps for path approximation
+  perms: 100         # Number of permutations for Shapley value estimation (optimized)
+  freq_step: 2.5     # Frequency step size for band decomposition (optimized for fs=360Hz)
+  batch_size: 25     # samples per SG sub-batch (200-sample ECG beats: tiny memory; 25 is safe on A100/H200)
+
+# STFT-specific parameters
+stft:
+  real_valued: true
+  steps: 10
+
+# Metrics parameters
+metrics:
+  conf_thresh: 0.6       # Minimum confidence threshold for sample selection
+  freq_patch_size: 5     # Ablation patch size for freq_infidelity
+  time_patch_size: 20    # Ablation patch size for time_infidelity
+
+# Output options
+output:
+  save_samples: true       # Always persisted anyway: all explainer/chunk jobs share results/<model>/samples_n<N>_s<seed>.npz
+  save_attributions: false  # Save raw attributions for each explainer

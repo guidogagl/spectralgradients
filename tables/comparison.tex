@@ -1,0 +1,90 @@
+\begin{landscape}
+\begin{table}[p]
+\centering
+\caption{Comparison of SG against the nine STFT-based configurations (per-sample medians). {*}\,SG significantly better, $^\dag$\,SG significantly worse (Holm-corrected two-sided Mann-Whitney U with $|\text{Cliff's }\delta|\geq0.147$, Section~\ref{sec:metrics}). \textbf{Bold}: best median per metric and domain. Localisation on the synthetic setups is reported in Table~\ref{tab:localisation}.}
+\label{tab:comparison}
+\setlength{\tabcolsep}{2.5pt}
+\begin{tabular}{@{}llllcccc@{}}
+\toprule
+\textbf{Domain} & \textbf{Model} & \textbf{Expl.} & \textbf{Win.} & \textbf{Freq.Inf} $\downarrow$ & \textbf{Freq.Cmplx} $\downarrow$ & \textbf{Time.Inf} $\downarrow$ & \textbf{Time.Cmplx} $\downarrow$ \\
+\midrule
+Synt-0 & Conv1D & SG & --- & 0.1308 & \textbf{0.6513} & \textbf{0.0901} & 0.7860 \\
+ &  & IG & time & \textbf{0.1274} & 0.7663\textsuperscript{*} & 0.4536\textsuperscript{*} & \textbf{0.7728} \\
+ &  & IG & bal & 0.2107\textsuperscript{*} & 0.7211\textsuperscript{*} & 0.3111\textsuperscript{*} & 0.8176\textsuperscript{*} \\
+ &  & IG & freq & 0.8818\textsuperscript{*} & 0.7165\textsuperscript{*} & 0.2837\textsuperscript{*} & 0.8985\textsuperscript{*} \\
+ &  & Sal & time & 0.7302\textsuperscript{*} & 0.9103\textsuperscript{*} & 0.8608\textsuperscript{*} & 0.8728\textsuperscript{*} \\
+ &  & Sal & bal & 0.8030\textsuperscript{*} & 0.8695\textsuperscript{*} & 0.8966\textsuperscript{*} & 0.8959\textsuperscript{*} \\
+ &  & Sal & freq & 0.8248\textsuperscript{*} & 0.8609\textsuperscript{*} & 0.8638\textsuperscript{*} & 0.9453\textsuperscript{*} \\
+ &  & IxG & time & 0.1610\textsuperscript{*} & 0.8733\textsuperscript{*} & 0.2856\textsuperscript{*} & 0.8466\textsuperscript{*} \\
+ &  & IxG & bal & 0.8026\textsuperscript{*} & 0.8405\textsuperscript{*} & 0.8819\textsuperscript{*} & 0.8672\textsuperscript{*} \\
+ &  & IxG & freq & 0.8912\textsuperscript{*} & 0.8239\textsuperscript{*} & 0.5417\textsuperscript{*} & 0.9318\textsuperscript{*} \\
+\midrule
+Synt-1 & Conv1D & SG & --- & 0.1252 & \textbf{0.6611} & \textbf{0.1961} & 0.7823 \\
+ &  & IG & time & \textbf{0.1251} & 0.7677\textsuperscript{*} & 0.9177\textsuperscript{*} & \textbf{0.7524\textsuperscript{\dag}} \\
+ &  & IG & bal & 0.4481\textsuperscript{*} & 0.7312\textsuperscript{*} & 0.3521\textsuperscript{*} & 0.8022 \\
+ &  & IG & freq & 0.9068\textsuperscript{*} & 0.7295\textsuperscript{*} & 0.2886 & 0.8889\textsuperscript{*} \\
+ &  & Sal & time & 0.7925\textsuperscript{*} & 0.8800\textsuperscript{*} & 0.8925\textsuperscript{*} & 0.8505\textsuperscript{*} \\
+ &  & Sal & bal & 0.8464\textsuperscript{*} & 0.8488\textsuperscript{*} & 0.8912\textsuperscript{*} & 0.8841\textsuperscript{*} \\
+ &  & Sal & freq & 0.8714\textsuperscript{*} & 0.8351\textsuperscript{*} & 0.6827\textsuperscript{*} & 0.9392\textsuperscript{*} \\
+ &  & IxG & time & 0.2550\textsuperscript{*} & 0.8805\textsuperscript{*} & 0.9171\textsuperscript{*} & 0.8232\textsuperscript{*} \\
+ &  & IxG & bal & 0.9023\textsuperscript{*} & 0.8437\textsuperscript{*} & 0.9290\textsuperscript{*} & 0.8612\textsuperscript{*} \\
+ &  & IxG & freq & 0.9078\textsuperscript{*} & 0.8225\textsuperscript{*} & 0.7263\textsuperscript{*} & 0.9356\textsuperscript{*} \\
+\midrule
+Synt-2 & Conv1D & SG & --- & 0.1156 & \textbf{0.6423} & \textbf{0.0321} & 0.7878 \\
+ &  & IG & time & \textbf{0.1034} & 0.7726\textsuperscript{*} & 0.3360\textsuperscript{*} & \textbf{0.7659\textsuperscript{\dag}} \\
+ &  & IG & bal & 0.1305\textsuperscript{*} & 0.7267\textsuperscript{*} & 0.2567\textsuperscript{*} & 0.8114\textsuperscript{*} \\
+ &  & IG & freq & 0.5764\textsuperscript{*} & 0.7240\textsuperscript{*} & 0.2642\textsuperscript{*} & 0.8936\textsuperscript{*} \\
+ &  & Sal & time & 0.6741\textsuperscript{*} & 0.8619\textsuperscript{*} & 0.7576\textsuperscript{*} & 0.8779\textsuperscript{*} \\
+ &  & Sal & bal & 0.8361\textsuperscript{*} & 0.8158\textsuperscript{*} & 0.7289\textsuperscript{*} & 0.8919\textsuperscript{*} \\
+ &  & Sal & freq & 0.8322\textsuperscript{*} & 0.8229\textsuperscript{*} & 0.4066\textsuperscript{*} & 0.9469\textsuperscript{*} \\
+ &  & IxG & time & 0.1306\textsuperscript{*} & 0.8649\textsuperscript{*} & 0.3172\textsuperscript{*} & 0.8603\textsuperscript{*} \\
+ &  & IxG & bal & 0.4599\textsuperscript{*} & 0.8219\textsuperscript{*} & 0.5576\textsuperscript{*} & 0.8924\textsuperscript{*} \\
+ &  & IxG & freq & 0.6746\textsuperscript{*} & 0.8061\textsuperscript{*} & 0.3572\textsuperscript{*} & 0.9463\textsuperscript{*} \\
+\midrule
+ECG & Conv1D & SG & --- & 0.0416 & \textbf{0.2818} & 0.0605 & \textbf{0.8769} \\
+ &  & IG & time & 0.2054\textsuperscript{*} & 0.6410\textsuperscript{*} & \textbf{0.0417} & 0.8952\textsuperscript{*} \\
+ &  & IG & bal & 0.0755 & 0.4292\textsuperscript{*} & 0.1168 & 0.9170\textsuperscript{*} \\
+ &  & IG & freq & 0.0405 & 0.3333\textsuperscript{*} & 0.1542\textsuperscript{*} & 0.9274\textsuperscript{*} \\
+ &  & Sal & time & 0.3626\textsuperscript{*} & 0.9048\textsuperscript{*} & 0.0615 & 0.9362\textsuperscript{*} \\
+ &  & Sal & bal & 0.2707\textsuperscript{*} & 0.8640\textsuperscript{*} & 0.0853 & 0.9514\textsuperscript{*} \\
+ &  & Sal & freq & 0.2674\textsuperscript{*} & 0.8634\textsuperscript{*} & 0.1078 & 0.9604\textsuperscript{*} \\
+ &  & IxG & time & 0.1399\textsuperscript{*} & 0.7325\textsuperscript{*} & 0.0444 & 0.9269\textsuperscript{*} \\
+ &  & IxG & bal & 0.0449 & 0.6012\textsuperscript{*} & 0.0781 & 0.9454\textsuperscript{*} \\
+ &  & IxG & freq & \textbf{0.0333} & 0.5635\textsuperscript{*} & 0.1042 & 0.9578\textsuperscript{*} \\
+\midrule
+Speech & Conv1D & SG & --- & \textbf{0.0498} & \textbf{0.6798} & \textbf{0.0711} & \textbf{0.8666} \\
+ &  & IG & time & 0.3198\textsuperscript{*} & 0.8001\textsuperscript{*} & 0.2654\textsuperscript{*} & 0.8748\textsuperscript{*} \\
+ &  & IG & bal & 0.2994\textsuperscript{*} & 0.7515\textsuperscript{*} & 0.2727\textsuperscript{*} & 0.8798\textsuperscript{*} \\
+ &  & IG & freq & 0.1407\textsuperscript{*} & 0.7118\textsuperscript{*} & 0.3884\textsuperscript{*} & 0.9055\textsuperscript{*} \\
+ &  & Sal & time & 0.5704\textsuperscript{*} & 0.9184\textsuperscript{*} & 0.4125\textsuperscript{*} & 0.9459\textsuperscript{*} \\
+ &  & Sal & bal & 0.5199\textsuperscript{*} & 0.9203\textsuperscript{*} & 0.4135\textsuperscript{*} & 0.9525\textsuperscript{*} \\
+ &  & Sal & freq & 0.3924\textsuperscript{*} & 0.9236\textsuperscript{*} & 0.4668\textsuperscript{*} & 0.9651\textsuperscript{*} \\
+ &  & IxG & time & 0.2206\textsuperscript{*} & 0.8628\textsuperscript{*} & 0.1930\textsuperscript{*} & 0.8943\textsuperscript{*} \\
+ &  & IxG & bal & 0.1909\textsuperscript{*} & 0.8341\textsuperscript{*} & 0.1945\textsuperscript{*} & 0.8999\textsuperscript{*} \\
+ &  & IxG & freq & 0.1150\textsuperscript{*} & 0.8098\textsuperscript{*} & 0.3211\textsuperscript{*} & 0.9268\textsuperscript{*} \\
+\midrule
+Sleep-MASS & Chambon2018 & SG & --- & 0.0271 & \textbf{0.5985} & \textbf{0.0259} & 0.9373 \\
+ &  & IG & time & 0.0374\textsuperscript{*} & 0.8013\textsuperscript{*} & 0.0464\textsuperscript{*} & 0.9325\textsuperscript{\dag} \\
+ &  & IG & bal & 0.0321 & 0.7994\textsuperscript{*} & 0.1074\textsuperscript{*} & 0.9445\textsuperscript{*} \\
+ &  & IG & freq & \textbf{0.0249} & 0.7776\textsuperscript{*} & 0.2083\textsuperscript{*} & 0.9546\textsuperscript{*} \\
+ &  & Sal & time & 0.2471\textsuperscript{*} & 0.8864\textsuperscript{*} & 0.3985\textsuperscript{*} & 0.9336 \\
+ &  & Sal & bal & 0.7091\textsuperscript{*} & 0.8887\textsuperscript{*} & 0.5312\textsuperscript{*} & 0.9348 \\
+ &  & Sal & freq & 0.7750\textsuperscript{*} & 0.8920\textsuperscript{*} & 0.5836\textsuperscript{*} & 0.9415\textsuperscript{*} \\
+ &  & IxG & time & 0.0697\textsuperscript{*} & 0.8016\textsuperscript{*} & 0.0870\textsuperscript{*} & \textbf{0.9133\textsuperscript{\dag}} \\
+ &  & IxG & bal & 0.0372\textsuperscript{*} & 0.7796\textsuperscript{*} & 0.1928\textsuperscript{*} & 0.9245\textsuperscript{\dag} \\
+ &  & IxG & freq & 0.0315\textsuperscript{*} & 0.7678\textsuperscript{*} & 0.2820\textsuperscript{*} & 0.9391 \\
+\midrule
+Sleep-EDF & TsinalisCNN & SG & --- & \textbf{0.0229} & \textbf{0.6123} & \textbf{0.0329} & 0.9243 \\
+ &  & IG & time & 0.0678\textsuperscript{*} & 0.8620\textsuperscript{*} & 0.0855\textsuperscript{*} & 0.9260 \\
+ &  & IG & bal & 0.0290\textsuperscript{*} & 0.8262\textsuperscript{*} & 0.3154\textsuperscript{*} & 0.9410\textsuperscript{*} \\
+ &  & IG & freq & 0.0242 & 0.7942\textsuperscript{*} & 0.4618\textsuperscript{*} & 0.9507\textsuperscript{*} \\
+ &  & Sal & time & 0.0897\textsuperscript{*} & 0.8543\textsuperscript{*} & 0.6668\textsuperscript{*} & 0.9486\textsuperscript{*} \\
+ &  & Sal & bal & 0.7026\textsuperscript{*} & 0.8678\textsuperscript{*} & 0.7825\textsuperscript{*} & 0.9550\textsuperscript{*} \\
+ &  & Sal & freq & 0.6040\textsuperscript{*} & 0.8570\textsuperscript{*} & 0.7079\textsuperscript{*} & 0.9631\textsuperscript{*} \\
+ &  & IxG & time & 0.1178\textsuperscript{*} & 0.8610\textsuperscript{*} & 0.1663\textsuperscript{*} & \textbf{0.9219} \\
+ &  & IxG & bal & 0.0345\textsuperscript{*} & 0.8194\textsuperscript{*} & 0.4185\textsuperscript{*} & 0.9384\textsuperscript{*} \\
+ &  & IxG & freq & 0.0278\textsuperscript{*} & 0.7861\textsuperscript{*} & 0.5105\textsuperscript{*} & 0.9495\textsuperscript{*} \\
+\bottomrule
+\end{tabular}
+\end{table}
+\end{landscape}

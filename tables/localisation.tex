@@ -1,0 +1,43 @@
+\begin{table}[t]
+\centering
+\caption{Localisation on the three synthetic setups, where ground-truth time-frequency masks are available (per-sample medians, higher is better). Markers and bold as in Table~\ref{tab:comparison}.}
+\label{tab:localisation}
+\begin{tabular}{@{}lllcc@{}}
+\toprule
+\textbf{Domain} & \textbf{Expl.} & \textbf{Win.} & \textbf{Freq.Loc} $\uparrow$ & \textbf{Time.Loc} $\uparrow$ \\
+\midrule
+Synt-0 & SG & --- & \textbf{4.8379} & 3.0551 \\
+ & IG & time & 3.0735\textsuperscript{*} & \textbf{3.0965} \\
+ & IG & bal & 3.9305\textsuperscript{*} & 3.0258 \\
+ & IG & freq & 3.9165\textsuperscript{*} & 2.3051\textsuperscript{*} \\
+ & Sal & time & 1.0816\textsuperscript{*} & 1.8927\textsuperscript{*} \\
+ & Sal & bal & 1.0954\textsuperscript{*} & 1.8127\textsuperscript{*} \\
+ & Sal & freq & 1.0724\textsuperscript{*} & 1.4912\textsuperscript{*} \\
+ & IxG & time & 1.9710\textsuperscript{*} & 2.4468\textsuperscript{*} \\
+ & IxG & bal & 3.0492\textsuperscript{*} & 2.7014 \\
+ & IxG & freq & 3.0960\textsuperscript{*} & 2.0644\textsuperscript{*} \\
+\midrule
+Synt-1 & SG & --- & \textbf{4.8443} & 3.0425 \\
+ & IG & time & 3.6771\textsuperscript{*} & \textbf{3.1979} \\
+ & IG & bal & 3.9965\textsuperscript{*} & 2.9897 \\
+ & IG & freq & 3.9429\textsuperscript{*} & 2.2819\textsuperscript{*} \\
+ & Sal & time & 1.2499\textsuperscript{*} & 1.7670\textsuperscript{*} \\
+ & Sal & bal & 1.2233\textsuperscript{*} & 1.6804\textsuperscript{*} \\
+ & Sal & freq & 1.2063\textsuperscript{*} & 1.3732\textsuperscript{*} \\
+ & IxG & time & 2.9700\textsuperscript{*} & 2.6036 \\
+ & IxG & bal & 3.2841\textsuperscript{*} & 2.4416\textsuperscript{*} \\
+ & IxG & freq & 3.2790\textsuperscript{*} & 1.9172\textsuperscript{*} \\
+\midrule
+Synt-2 & SG & --- & \textbf{4.7695} & \textbf{2.9440} \\
+ & IG & time & 3.0783\textsuperscript{*} & 2.9100 \\
+ & IG & bal & 3.5440\textsuperscript{*} & 2.8486 \\
+ & IG & freq & 3.5043\textsuperscript{*} & 2.1934\textsuperscript{*} \\
+ & Sal & time & 1.5128\textsuperscript{*} & 1.7102\textsuperscript{*} \\
+ & Sal & bal & 1.5213\textsuperscript{*} & 1.6545\textsuperscript{*} \\
+ & Sal & freq & 1.4876\textsuperscript{*} & 1.3806\textsuperscript{*} \\
+ & IxG & time & 2.4836\textsuperscript{*} & 2.3559\textsuperscript{*} \\
+ & IxG & bal & 2.9850\textsuperscript{*} & 2.3587\textsuperscript{*} \\
+ & IxG & freq & 2.9738\textsuperscript{*} & 1.8551\textsuperscript{*} \\
+\bottomrule
+\end{tabular}
+\end{table}
